@@ -1,0 +1,36 @@
+body {
+  font-family: sans-serif;
+  margin: 0;
+  background: #f9f9f9;
+  color: #222;
+}
+.container {
+  max-width: 800px;
+  margin: 50px auto;
+  padding: 0 20px;
+}
+h1, h2 {
+  text-align: center;
+}
+.articles {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.card {
+  display: flex;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.card img {
+  width: 120px;
+  object-fit: cover;
+}
+.card .info {
+  padding: 15px;
+}
+
