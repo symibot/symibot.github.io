@@ -12,6 +12,15 @@ body {
 h1, h2 {
   text-align: center;
 }
+
+.contianer h1 {
+    color: #d11313;
+}
+
+.container p {
+    color: #d11313;
+}
+
 .articles {
   display: flex;
   flex-direction: column;
