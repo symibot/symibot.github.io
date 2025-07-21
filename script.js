@@ -1,19 +1,20 @@
 const cards = document.querySelectorAll(".card");
-const wrapper = document.querySelector(".articles");
 
-wrapper.addEventListener("mousemove", function (event) {
-  cards.forEach((card) => {
+cards.forEach((card) => {
+  card.addEventListener("mousemove", (e) => {
     const rect = card.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
 
-    card.querySelector(".card-content").style.background = `radial-gradient(960px circle at ${x}px ${y}px, rgba(59, 248, 251, 0.15), #1e1f22)`;
+    card.style.setProperty("--x", `${x}px`);
+    card.style.setProperty("--y", `${y}px`);
+    card.classList.add("glow");
   });
-});
 
-wrapper.addEventListener("mouseleave", function () {
-  cards.forEach((card) => {
-    card.querySelector(".card-content").style.background = "#1e1f22";
+  card.addEventListener("mouseleave", () => {
+    card.classList.remove("glow");
+    card.style.removeProperty("--x");
+    card.style.removeProperty("--y");
   });
 });
 
