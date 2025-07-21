@@ -15,9 +15,13 @@ h1, h2 {
 }
 
 .container p {
+    text-align: center;
     color: #faf7f7;
 }
 
+h2 {
+  margin-top: 40px;
+}
 
 .articles {
   display: flex;
@@ -34,6 +38,7 @@ h1, h2 {
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 .card img {
+  height: 120px;
   width: 120px;
   object-fit: cover;
 }
