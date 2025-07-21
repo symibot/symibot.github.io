@@ -208,11 +208,12 @@
     }
     
     /* Mid example code blocks */
-    p + pre {
-      background-color: rgba(25, 25, 35, 0.7);
-      border-left: 4px solid var(--accent-secondary);
-      padding: 1rem;
-    }
+    pre {
+  background-color: rgba(25, 25, 35, 0.7);
+  border-left: 4px solid var(--accent-secondary);
+  padding: 1rem;
+  }
+
     
     p + pre code {
       font-size: 0.9rem;
@@ -303,11 +304,12 @@ fetch(url);</code></pre>
     <p>Nowadays, it is common to have a web application architecture with a back-end API and a dynamic front end such as React or Angular. If the frontend builds API request paths using unvalidated user input (like route parameters <code>[/users/:id → /users/42]</code> or query strings <code>[/users?id=42]</code>), then an attacker can use relative path traversal <code>(../)</code> to forge requests to sensitive or privileged API endpoints even bypassing client-side authorization logic.</p>
 
     <h2>Visual Representation</h2>
-    <img src="img/visual_representation.png" alt="CSPT Attack Flow">
+    <img src="img/visual1.png" alt="CSPT Attack Flow">
     <p>In this context, an attacker with control over the <code>{USER_INPUT}</code> value can perform a path traversal in order to route the victim's request to another endpoint.</p>
 
     <p>An attacker can coerce a victim into executing this unexpected request. This is the starting point of a Client-Side Path Traversal (CSPT). A Client-Side Path Traversal can be split into two parts.</p>
     <p>The source is the trigger of the CSPT, while the sinks are the exploitable endpoints that can be reached by this CSPT.</p>
+    <img src="img/visual2.png" alt="CSPT Attack Flow">
     <p>In order to understand how we can use CSPT as an attack vector, both source and sink must be defined.</p>
 
     <h2>Source</h2>
@@ -421,7 +423,8 @@ display_post_html(post_content);</code></pre>
     <h2>Testing for CSPT</h2>
     <p>You can test for these issues in two ways:</p>
     <ol>
-      <li><strong>Manually reviewing JavaScript code:</strong> Use DevTools to find any <code>fetch()</code>/XHR calls via breakpoints to let the browser pause the moment any XHR/fetch is about to fire. At that breakpoint, you can inspect the call stack and see exactly which JS file and line concatenated your "?param=...".</li>
+      <li><strong>Manually reviewing JavaScript code:</strong> Use DevTools to find any <code>fetch()</code>/XHR calls via breakpoints to let the browser pause the moment any XHR/fetch is about to fire. At that breakpoint, you can inspect the call stack and see exactly which JS file and line concatenated your "?param=...". 
+      </li>
       <li><strong>Observing requests in browser:</strong> Watch XHR or fetch requests in the Network tab of DevTools (make sure "All" requests are shown). Check if any request paths are influenced by user-controlled inputs.</li>
     </ol>
     
@@ -440,51 +443,70 @@ display_post_html(post_content);</code></pre>
     </ul>
 
     <h2>Write-ups & Resources</h2>
+
+    <h3>WRITE-UPS:</h3>
     <ul>
-      <li><a href="https://blog.doyensec.com/2025/03/27/cspt-resources.htm">CSPT Fundamentals (Doyensec)</a></li>
-      <li><a href="https://medium.com/@Nightbloodz/the-power-of-client-side-path-traversal">Real-world CSPT Case Study</a></li>
-      <li><a href="https://book.hacktricks.xyz/en/pentesting-web/client-side-path-traversal">HackTricks CSPT Guide</a></li>
-      <li><a href="https://github.com/doyensec/CSPTPlayground">CSPT Playground (Practice)</a></li>
+      <li><a href="https://matanber.com/blog/cspt-levels">CSPT Levels – Matan Ber</a></li>
+      <li><a href="https://web.archive.org/web/20250531084125/https://mr-medi.github.io/research/2022/11/04/practical-client-side-path-traversal-attacks.html">Practical CSPT Attacks (Mr. Medi)</a></li>
+      <li><a href="https://netragard.com/saving-csrf-client-side-path-traversal-to-the-rescue/#:~:text=CSRF%20is%20typically%20mitigated%20by,web%20applications%20from%20these%20attacks">CSRF Saved by CSPT (Netragard)</a></li>
+      <li><a href="https://blog.doyensec.com/2025/01/09/cspt-file-upload.html">CSPT + File Upload (Doyensec)</a></li>
+      <li><a href="https://medium.com/@renwa/client-side-path-traversal-cspt-bug-bounty-reports-and-techniques-8ee6cd2e7ca1">Bug Bounty Techniques (Renwa)</a></li>
+      <li><a href="https://medium.com/@Nightbloodz/the-power-of-client-side-path-traversal-how-i-found-and-escalated-2-bugs-through-670338afc90f">Escalating CSPT Bugs (Nightbloodz)</a></li>
+      <li><a href="https://blog.xss.am/2023/08/cve-2023-39968-jupyter-token-leak/">Jupyter Token Leak </a></li>
     </ul>
 
-    <div class="disclaimer">
+    <h3>RESOURCES:</h3>
+    <ul>
+      <li><a href="https://blog.doyensec.com/2025/03/27/cspt-resources.htm">CSPT Resources (Doyensec)</a></li>
+      <li><a href="https://blog.doyensec.com/2025/01/09/cspt-file-upload.html">CSPT + File Upload (Again)</a></li>
+      <li><a href="https://blog.doyensec.com/2024/07/02/cspt2csrf.html#:~:text=whitepaper">CSPT2CSRF Whitepaper</a></li>
+      <li><a href="https://drive.google.com/file/d/1l7KzJBMjQ_4RW_o6oVsi04hD_ESrL43i/view?usp=drivesdk">Doyensec CSPT Slide Deck (PDF)</a></li>
+      <li><a href="https://book.hacktricks.wiki/en/pentesting-web/client-side-path-traversal.html">HackTricks CSPT Guide</a></li>
+      <li><a href="https://www.usenix.org/system/files/sec21-khodayari.pdf">Usenix Research Paper</a></li>
+    </ul>
+
+    <h3>PRACTICE:</h3>
+    <ul>
+      <li><a href="https://github.com/doyensec/CSPTPlayground">CSPT Playground (GitHub)</a></li>
+      <li><a href="https://www.root-me.org/en/Challenges/Web-Client/CSPT-The-Ruler">RootMe: CSPT – The Ruler</a></li>
+      <li><a href="https://blog.doyensec.com/2024/12/03/cspt-with-eval-villain.html">Eval Villain CSPT Write-up</a></li>
+      <li><a href="https://addons.mozilla.org/en-US/firefox/addon/eval-villain/">Eval Villain Firefox Add-on</a></li>
+    </ul>
+
+    <p><em>Will be adding more later.</em></p>
+
+
+    <div class="disclaimer" style="margin-top: 3rem;">
       <h2>Disclaimer</h2>
-      <p>This started as personal notes from my web hacking learning journey. I've cleaned them up in case they help others too. If you're learning too and want to connect:</p>
-      <p>Discord: symibot<br>Twitter/X: symibot</p>
+      <p>This started as personal notes from my web hacking journey. I cleaned them up in case they help others too.</p>
+      <p>If you're learning too and want to connect:</p>
+      <ul style="list-style: none; padding-left: 0; margin-top: 0.5rem;">
+        <li>🐦 <a href="https://x.com/Symibot" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: underline;">@Symibot on Twitter/X</a></li>
+        <li>💬 Discord: <code>symibot</code></li>
+      </ul>
     </div>
-  </div>
+
+
 
   <script>
   // Enhanced GLOW EFFECT — for all <pre>
-  document.querySelectorAll('pre').forEach((block) => {
-    block.addEventListener('mousemove', (e) => {
-      const rect = block.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      block.style.setProperty('--x', `${x}px`);
-      block.style.setProperty('--y', `${y}px`);
-    });
-
-    block.addEventListener('mouseleave', () => {
-      block.style.setProperty('--x', `-100%`);
-      block.style.setProperty('--y', `-100%`);
-    });
+document.querySelectorAll('pre').forEach((block) => {
+  block.addEventListener('mousemove', (e) => {
+    const rect = block.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    block.style.setProperty('--x', `${x}px`);
+    block.style.setProperty('--y', `${y}px`);
   });
 
-  // Enhanced SYNTAX HIGHLIGHTING
-  document.querySelectorAll('pre code').forEach((code) => {
-    if (code.dataset.highlighted) return;
-
-    code.innerHTML = code.innerHTML
-      .replace(/\b(const|let|var|function|return|if|else|for|while|await|async)\b/g, '<span class="keyword">$&</span>')
-      .replace(/(".*?"|'.*?')/g, '<span class="string">$&</span>')
-      .replace(/\b(\d+)\b/g, '<span class="number">$&</span>')
-      .replace(/\/\/.*/g, '<span class="comment">$&</span>')
-      .replace(/(\+=|\+|\=|\-|\*|\/|%|&&|\|\||!|\.)/g, '<span class="operator">$&</span>')
-      .replace(/\b([a-zA-Z_][a-zA-Z0-9_]*)\s*\(/g, '<span class="function">$1</span>(');
-
-    code.dataset.highlighted = true;
+  block.addEventListener('mouseleave', () => {
+    block.style.setProperty('--x', `-100%`);
+    block.style.setProperty('--y', `-100%`);
   });
-</script>
+});
+
+  </script>
+
+  
 </body>
 </html>

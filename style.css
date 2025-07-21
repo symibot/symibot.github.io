@@ -85,6 +85,12 @@ h2 {
   z-index: 0;
 }
 
+.card .info p {
+  font-size: 0.9rem;
+  color: #a0a0b0; 
+  text-align: left; 
+}
+
 .card:hover::before {
   opacity: 1;
   filter: blur(12px);
