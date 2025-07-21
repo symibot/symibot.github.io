@@ -2,70 +2,291 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>redcolour — Understanding Client-Side Path Traversal (CSPT)</title>
   <style>
-    body {
-      font-family: sans-serif;
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap');
+    
+    :root {
+  --bg-primary: #0a0a0f;
+  --bg-secondary: #15151e;
+  --text-primary: #e0e0e0;
+  --text-secondary: #a0a0b0;
+  --accent-primary: #ff3366;
+  --accent-secondary: #eeff33;
+  --code-inline-bg: rgba(255, 51, 102, 0.15);
+  --code-inline-border: rgba(255, 51, 102, 0.3);
+  --code-block-bg: #15151e;
+  --code-block-border: #2a2a3a;
+  --code-block-glow: rgba(170, 51, 255, 0.2);
+
+  /* Updated: solid red gradient matching accent-primary */
+  --header-gradient: linear-gradient(135deg, #ff3366, #ff3366);
+}
+
+
+    
+    * {
+      box-sizing: border-box;
       margin: 0;
-      background: #0A0A0A;
-      color: #222;
-    }
-    .container {
-      max-width: 800px;
-      margin: 50px auto;
-      padding: 0 20px;
-      color: #faf7f7;
-      text-align: left;
-    }
-    .container h1,
-    .container h2 {
-      text-align: center;
-      color: #faf7f7;
-    }
-    h2 {
-      margin-top: 40px;
-    }
-    code {
-      background: #333;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-family: monospace;
-    }
-    pre {
-      background: #333;
-      padding: 15px;
-      border-radius: 8px;
-      overflow-x: auto;
-      line-height: 1.4;
-    }
-    pre code {
-      background: transparent;
       padding: 0;
     }
-    ul, ol {
-      padding-left: 20px;
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.7;
+      min-height: 100vh;
+      padding: 0;
+      margin: 0;
+      overflow-x: hidden;
     }
-    li {
-      margin-bottom: 8px;
+    
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+      position: relative;
     }
-    a {
-      color: #4da6ff;
+    
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 2rem;
+      background: var(--header-gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-align: center;
+      font-weight: 800;
+      letter-spacing: -0.05em;
+      line-height: 1.2;
+      position: relative;
+      padding-bottom: 1rem;
       text-decoration: none;
     }
+    
+    h2 {
+      font-size: 1.8rem;
+      margin: 3rem 0 1.5rem;
+      color: var(--accent-secondary);
+      font-weight: 700;
+      position: relative;
+      padding-bottom: 0.5rem;
+    }
+    
+    h2::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 60px;
+      height: 2px;
+      background: var(--accent-secondary);
+      opacity: 0.5;
+    }
+    
+    h3 {
+      font-size: 1.4rem;
+      margin: 2rem 0 1rem;
+      color: var(--accent-primary);
+      font-weight: 600;
+    }
+    
+    p {
+      margin-bottom: 1.5rem;
+      color: var(--text-primary);
+    }
+    
+    a {
+      color: var(--accent-secondary);
+      text-decoration: none;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    
     a:hover {
+      color: var(--accent-primary);
       text-decoration: underline;
     }
+    
+    a::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: var(--accent-primary);
+      transition: width 0.3s ease;
+    }
+    
+    a:hover::after {
+      width: 100%;
+    }
+    
+    ul, ol {
+      margin-bottom: 1.5rem;
+      padding-left: 1.5rem;
+    }
+    
+    li {
+      margin-bottom: 0.5rem;
+      color: var(--text-secondary);
+    }
+    
+    li::marker {
+      color: var(--accent-primary);
+    }
+    
+    /* Inline code */
+    code:not(pre code) {
+      font-family: 'JetBrains Mono', monospace;
+      background-color: var(--code-inline-bg);
+      color: var(--accent-primary);
+      padding: 0.2em 0.4em;
+      border-radius: 4px;
+      font-size: 0.9em;
+      border: 1px solid var(--code-inline-border);
+      transition: all 0.2s ease;
+    }
+    
+    code:not(pre code):hover {
+      background-color: rgba(255, 51, 102, 0.25);
+      transform: translateY(-1px);
+    }
+    
+    /* Full code blocks */
+    pre {
+      background-color: var(--code-block-bg);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+      overflow-x: auto;
+      border: 1px solid var(--code-block-border);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      position: relative;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    pre:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+    }
+    
+    pre::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border-radius: 8px;
+      background: radial-gradient(600px circle at var(--x, -100%) var(--y, -100%), 
+                  var(--code-block-glow), transparent 70%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+      z-index: 0;
+    }
+    
+    pre:hover::before {
+      opacity: 1;
+    }
+    
+    pre code {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-primary);
+      background: transparent;
+      padding: 0;
+      border: none;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      display: block;
+      position: relative;
+      z-index: 1;
+    }
+    
+    /* Mid example code blocks */
+    p + pre {
+      background-color: rgba(25, 25, 35, 0.7);
+      border-left: 4px solid var(--accent-secondary);
+      padding: 1rem;
+    }
+    
+    p + pre code {
+      font-size: 0.9rem;
+    }
+    
+    /* Syntax highlighting */
+    .keyword { color: #ff7faa; }
+    .string { color: #66ff99; }
+    .number { color: #ffcc66; }
+    .comment { color: #8888aa; font-style: italic; }
+    .function { color: #66ccff; }
+    .operator { color: #ff9966; }
+    
     img {
       max-width: 100%;
-      display: block;
-      margin: 20px auto;
+      height: auto;
       border-radius: 8px;
+      margin: 2rem auto;
+      display: block;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--code-block-border);
+    }
+    
+    /* Footer */
+    .disclaimer {
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--code-block-border);
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .container {
+        padding: 1.5rem 1rem;
+      }
+      
+      h1 {
+        font-size: 2rem;
+      }
+      
+      h2 {
+        font-size: 1.5rem;
+      }
+      
+      pre {
+        padding: 1rem;
+      }
+    }
+    
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: var(--bg-secondary);
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: var(--accent-primary);
+      border-radius: 5px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: #ff1a4d;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Understanding Client-Side Path Traversal (CSPT)</h1>
+    <h1>Understanding Client-Side Path Traversal</h1>
     
     <p>Every security researcher should be familiar with path traversal vulnerabilities. These allow an attacker to use payloads like <code>../../../../</code> to access data outside the intended directory. Unlike server-side path traversal, which targets files on the server, client-side path traversal (CSPT) exploits weaknesses in frontend code to make unauthorized requests to unintended API endpoints. While server-side path traversal is well-known and commonly exploited, client-side variants have received far less attention and remain relatively rare in public disclosures.</p>
 
@@ -82,7 +303,6 @@ fetch(url);</code></pre>
     <p>Nowadays, it is common to have a web application architecture with a back-end API and a dynamic front end such as React or Angular. If the frontend builds API request paths using unvalidated user input (like route parameters <code>[/users/:id → /users/42]</code> or query strings <code>[/users?id=42]</code>), then an attacker can use relative path traversal <code>(../)</code> to forge requests to sensitive or privileged API endpoints even bypassing client-side authorization logic.</p>
 
     <h2>Visual Representation</h2>
-    <!-- Add your visual representation image here -->
     <img src="img/visual_representation.png" alt="CSPT Attack Flow">
     <p>In this context, an attacker with control over the <code>{USER_INPUT}</code> value can perform a path traversal in order to route the victim's request to another endpoint.</p>
 
@@ -227,9 +447,44 @@ display_post_html(post_content);</code></pre>
       <li><a href="https://github.com/doyensec/CSPTPlayground">CSPT Playground (Practice)</a></li>
     </ul>
 
-    <h2>Disclaimer</h2>
-    <p>This started as personal notes from my web hacking learning journey. I've cleaned them up in case they help others too. If you're learning too and want to connect:</p>
-    <p>Discord: symibot<br>Twitter/X: symibot</p>
+    <div class="disclaimer">
+      <h2>Disclaimer</h2>
+      <p>This started as personal notes from my web hacking learning journey. I've cleaned them up in case they help others too. If you're learning too and want to connect:</p>
+      <p>Discord: symibot<br>Twitter/X: symibot</p>
+    </div>
   </div>
+
+  <script>
+  // Enhanced GLOW EFFECT — for all <pre>
+  document.querySelectorAll('pre').forEach((block) => {
+    block.addEventListener('mousemove', (e) => {
+      const rect = block.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      block.style.setProperty('--x', `${x}px`);
+      block.style.setProperty('--y', `${y}px`);
+    });
+
+    block.addEventListener('mouseleave', () => {
+      block.style.setProperty('--x', `-100%`);
+      block.style.setProperty('--y', `-100%`);
+    });
+  });
+
+  // Enhanced SYNTAX HIGHLIGHTING
+  document.querySelectorAll('pre code').forEach((code) => {
+    if (code.dataset.highlighted) return;
+
+    code.innerHTML = code.innerHTML
+      .replace(/\b(const|let|var|function|return|if|else|for|while|await|async)\b/g, '<span class="keyword">$&</span>')
+      .replace(/(".*?"|'.*?')/g, '<span class="string">$&</span>')
+      .replace(/\b(\d+)\b/g, '<span class="number">$&</span>')
+      .replace(/\/\/.*/g, '<span class="comment">$&</span>')
+      .replace(/(\+=|\+|\=|\-|\*|\/|%|&&|\|\||!|\.)/g, '<span class="operator">$&</span>')
+      .replace(/\b([a-zA-Z_][a-zA-Z0-9_]*)\s*\(/g, '<span class="function">$1</span>(');
+
+    code.dataset.highlighted = true;
+  });
+</script>
 </body>
 </html>

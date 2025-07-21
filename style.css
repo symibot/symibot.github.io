@@ -6,8 +6,8 @@
 
 body {
   font-family: sans-serif;
-  background-color: #121317;
-  color: #f0f0f0;
+  background-color: #0a0a0f; /* matches --bg-primary */
+  color: #e0e0e0; /* matches --text-primary */
   min-height: 100vh;
 }
 
@@ -19,12 +19,12 @@ body {
 
 h1, h2 {
   text-align: center;
-  color: #ffffff;
+  color: #ff3366; /* matches --accent-primary */
 }
 
 .container p {
   text-align: center;
-  color: #cccccc;
+  color: #a0a0b0; /* matches --text-secondary */
 }
 
 h2 {
@@ -42,7 +42,7 @@ h2 {
 
 .card {
   display: flex;
-  background-color: #1e1f22;
+  background-color: #15151e; /* matches --bg-secondary */
   border-radius: 10px;
   overflow: hidden;
   text-decoration: none;
@@ -64,9 +64,9 @@ h2 {
   z-index: 2;
 }
 
-/* Purple glow background (mouse-based) */
 .card.glow {
-  background: radial-gradient(960px circle at var(--x, 50%) var(--y, 50%), rgba(130, 87, 229, 0.2), transparent 20%);
+  background: radial-gradient(960px circle at var(--x, 50%) var(--y, 50%), rgba(255, 51, 102, 0.2), transparent 20%);
+  /* red glow = rgba version of --accent-primary */
 }
 
 .card::before {
@@ -78,7 +78,7 @@ h2 {
   height: 160%;
   transform: translate(-50%, -50%);
   border-radius: 12px;
-  background: radial-gradient(circle, rgba(130, 87, 229, 0.2), transparent 60%);
+  background: radial-gradient(circle, rgba(170, 51, 255, 0.2), transparent 60%);
   opacity: 0;
   transition: opacity 0.3s ease, filter 0.3s ease;
   pointer-events: none;
@@ -111,19 +111,19 @@ h2 {
 .card .info h3 {
   margin-bottom: 0.5rem;
   font-weight: bold;
-  color: #ffffff;
+  color: #ff3366; /* matches --accent-primary */
 }
 
 .card .info p {
   font-size: 0.9rem;
-  color: #ccc;
+  color: #a0a0b0; /* matches --text-secondary */
 }
 
 .card pre {
   max-height: 200px;
   overflow: auto;
-  background: #282c34;
-  color: #abb2bf;
+  background: #15151e; /* matches --code-block-bg */
+  color: #e0e0e0; /* matches --text-primary */
   padding: 12px;
   border-radius: 6px;
   font-family: 'Fira Code', monospace;
@@ -134,4 +134,3 @@ h2 {
   flex-shrink: 0;
   z-index: 1;
 }
-
