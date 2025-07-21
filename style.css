@@ -1,7 +1,7 @@
 body {
   font-family: sans-serif;
   margin: 0;
-  background: #851c1c;
+  background: #0A0A0A;
   color: #222;
 }
 .container {
@@ -11,15 +11,13 @@ body {
 }
 h1, h2 {
   text-align: center;
-}
-
-.contianer h1 {
-    color: #d11313;
+  color: #faf7f7;
 }
 
 .container p {
-    color: #d11313;
+    color: #faf7f7;
 }
+
 
 .articles {
   display: flex;
