@@ -253,22 +253,67 @@
     
     /* Responsive adjustments */
     @media (max-width: 768px) {
-      .container {
-        padding: 1.5rem 1rem;
-      }
-      
-      h1 {
-        font-size: 2rem;
-      }
-      
-      h2 {
-        font-size: 1.5rem;
-      }
-      
-      pre {
-        padding: 1rem;
-      }
-    }
+  /* Make container full width with padding */
+  .container {
+    max-width: 100%;
+    padding: 1.5rem 1rem;
+  }
+
+  /* Scale down headers smoothly */
+  h1 {
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+  }
+  h2 {
+    font-size: 1.4rem;
+    margin: 1.5rem 0 1rem;
+  }
+  h3 {
+    font-size: 1.1rem;
+    margin: 1rem 0 0.75rem;
+  }
+
+  /* Paragraphs: make text bigger & easier to read */
+  p {
+    font-size: 1rem;
+    line-height: 1.5;
+    margin-bottom: 1.25rem;
+  }
+
+  /* Lists: reduce left padding for less indentation */
+  ul, ol {
+    padding-left: 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  /* Inline code: reduce font size a bit */
+  code:not(pre code) {
+    font-size: 0.9rem;
+  }
+
+  /* Code blocks: smaller font + horizontal scroll */
+  pre {
+    font-size: 0.85rem;
+    padding: 1rem;
+    overflow-x: auto;
+    white-space: pre-wrap; /* allow wrapping on very narrow screens */
+    word-break: break-word; /* prevent overflow */
+  }
+
+  /* Links bigger tap area */
+  a {
+    font-size: 1rem;
+    word-break: break-word;
+  }
+
+  /* Fix scrollbar thickness */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+}
+
     
     /* Scrollbar */
     ::-webkit-scrollbar {

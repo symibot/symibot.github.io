@@ -248,9 +248,17 @@
     
     /* Responsive adjustments */
     @media (max-width: 768px) {
-      .container {
-        padding: 1.5rem 1rem;
+  .container {
+    max-width: 100%;  /* or max-width: 95vw; */
+    padding: 1.5rem 1rem;
       }
+    }
+    code {
+     word-wrap: break-word;
+     overflow-wrap: break-word;
+     white-space: pre-wrap;
+    }
+
       
       h1 {
         font-size: 2rem;
@@ -295,7 +303,7 @@
     <pre><code>const url = `/app/playbooks/${userInput}`;
 fetch(url);</code></pre>
 
-    <p>If <code>userInput = "../../../../api/v4/users"</code> then:</p>
+    <p>If userInput = <code>"../../../../api/v4/users"</code> then:</p>
     <pre><code>fetch("/app/playbooks/../../../../api/v4/users")</code></pre>
 
     <p>The browser normalizes this path, so now it resolves to:</p>
