@@ -19,8 +19,6 @@
   --code-block-bg: #15151e;
   --code-block-border: #2a2a3a;
   --code-block-glow: rgba(170, 51, 255, 0.2);
-
-  /* Updated: solid red gradient matching accent-primary */
   --header-gradient: linear-gradient(135deg, #ff3366, #ff3366);
 }
 
@@ -139,7 +137,6 @@
       color: var(--accent-primary);
     }
     
-    /* Inline code */
     code:not(pre code) {
       font-family: 'JetBrains Mono', monospace;
       background-color: var(--code-inline-bg);
@@ -156,7 +153,6 @@
       transform: translateY(-1px);
     }
     
-    /* Full code blocks */
     pre {
       background-color: var(--code-block-bg);
       border-radius: 8px;
@@ -207,7 +203,6 @@
       z-index: 1;
     }
     
-    /* Mid example code blocks */
     pre {
   background-color: rgba(25, 25, 35, 0.7);
   border-left: 4px solid var(--accent-secondary);
@@ -219,7 +214,6 @@
       font-size: 0.9rem;
     }
     
-    /* Syntax highlighting */
     .keyword { color: #ff7faa; }
     .string { color: #66ff99; }
     .number { color: #ffcc66; }
@@ -237,7 +231,6 @@
       border: 1px solid var(--code-block-border);
     }
     
-    /* Footer */
     .disclaimer {
       margin-top: 3rem;
       padding-top: 2rem;
@@ -246,10 +239,10 @@
       font-size: 0.9rem;
     }
     
-    /* Responsive adjustments */
+
     @media (max-width: 768px) {
   .container {
-    max-width: 100%;  /* or max-width: 95vw; */
+    max-width: 100%;  
     padding: 1.5rem 1rem;
       }
     }
@@ -271,9 +264,7 @@
       pre {
         padding: 1rem;
       }
-    }
     
-    /* Scrollbar */
     ::-webkit-scrollbar {
       width: 10px;
       height: 10px;

@@ -145,7 +145,6 @@
       color: var(--accent-primary);
     }
     
-    /* Inline code */
     code:not(pre code) {
       font-family: 'JetBrains Mono', monospace;
       background-color: var(--code-inline-bg);
@@ -162,7 +161,6 @@
       transform: translateY(-1px);
     }
     
-    /* Full code blocks */
     pre {
       background-color: var(--code-block-bg);
       border-radius: 8px;
@@ -213,7 +211,7 @@
       z-index: 1;
     }
     
-    /* Mid example code blocks */
+
     pre {
       background-color: rgba(25, 25, 35, 0.7);
       border-left: 4px solid var(--accent-secondary);
@@ -224,7 +222,7 @@
       font-size: 0.9rem;
     }
     
-    /* Syntax highlighting */
+
     .keyword { color: #ff7faa; }
     .string { color: #66ff99; }
     .number { color: #ffcc66; }
@@ -242,7 +240,7 @@
       border: 1px solid var(--code-block-border);
     }
     
-    /* Footer */
+
     .disclaimer {
       margin-top: 3rem;
       padding-top: 2rem;
@@ -251,15 +249,15 @@
       font-size: 0.9rem;
     }
     
-    /* Responsive adjustments */
+
     @media (max-width: 768px) {
-  /* Make container full width with padding */
+
   .container {
     max-width: 100%;
     padding: 1.5rem 1rem;
   }
 
-  /* Scale down headers smoothly */
+
   h1 {
     font-size: 1.8rem;
     margin-bottom: 1.5rem;
@@ -274,40 +272,35 @@
     margin: 1rem 0 0.75rem;
   }
 
-  /* Paragraphs: make text bigger & easier to read */
+
   p {
     font-size: 1rem;
     line-height: 1.5;
     margin-bottom: 1.25rem;
   }
 
-  /* Lists: reduce left padding for less indentation */
   ul, ol {
     padding-left: 1.25rem;
     margin-bottom: 1rem;
   }
 
-  /* Inline code: reduce font size a bit */
   code:not(pre code) {
     font-size: 0.9rem;
   }
 
-  /* Code blocks: smaller font + horizontal scroll */
   pre {
     font-size: 0.85rem;
     padding: 1rem;
     overflow-x: auto;
-    white-space: pre-wrap; /* allow wrapping on very narrow screens */
-    word-break: break-word; /* prevent overflow */
+    white-space: pre-wrap; 
+    word-break: break-word; 
   }
 
-  /* Links bigger tap area */
   a {
     font-size: 1rem;
     word-break: break-word;
   }
 
-  /* Fix scrollbar thickness */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -315,7 +308,6 @@
 }
 
     
-    /* Scrollbar */
     ::-webkit-scrollbar {
       width: 10px;
       height: 10px;
