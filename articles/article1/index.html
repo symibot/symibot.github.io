@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>redcolour — Understanding Client-Side Path Traversal (CSPT)</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap');
+    
+    :root {
+  --bg-primary: #0a0a0f;
+  --bg-secondary: #15151e;
+  --text-primary: #e0e0e0;
+  --text-secondary: #a0a0b0;
+  --accent-primary: #ff3366;
+  --accent-secondary: #eeff33;
+  --code-inline-bg: rgba(255, 51, 102, 0.15);
+  --code-inline-border: rgba(255, 51, 102, 0.3);
+  --code-block-bg: #15151e;
+  --code-block-border: #2a2a3a;
+  --code-block-glow: rgba(170, 51, 255, 0.2);
+  --header-gradient: linear-gradient(135deg, #ff3366, #ff3366);
+}
+
+
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.7;
+      min-height: 100vh;
+      padding: 0;
+      margin: 0;
+      overflow-x: hidden;
+    }
+    
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+      position: relative;
+    }
+    
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 2rem;
+      background: var(--header-gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-align: center;
+      font-weight: 800;
+      letter-spacing: -0.05em;
+      line-height: 1.2;
+      position: relative;
+      padding-bottom: 1rem;
+      text-decoration: none;
+    }
+    
+    h2 {
+      font-size: 1.8rem;
+      margin: 3rem 0 1.5rem;
+      color: var(--accent-secondary);
+      font-weight: 700;
+      position: relative;
+      padding-bottom: 0.5rem;
+    }
+    
+    h2::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 60px;
+      height: 2px;
+      background: var(--accent-secondary);
+      opacity: 0.5;
+    }
+    
+    h3 {
+      font-size: 1.4rem;
+      margin: 2rem 0 1rem;
+      color: var(--accent-primary);
+      font-weight: 600;
+    }
+    
+    p {
+      margin-bottom: 1.5rem;
+      color: var(--text-primary);
+    }
+    
+    a {
+      color: var(--accent-secondary);
+      text-decoration: none;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    
+    a:hover {
+      color: var(--accent-primary);
+      text-decoration: underline;
+    }
+    
+    a::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: var(--accent-primary);
+      transition: width 0.3s ease;
+    }
+    
+    a:hover::after {
+      width: 100%;
+    }
+    
+    ul, ol {
+      margin-bottom: 1.5rem;
+      padding-left: 1.5rem;
+    }
+    
+    li {
+      margin-bottom: 0.5rem;
+      color: var(--text-secondary);
+    }
+    
+    li::marker {
+      color: var(--accent-primary);
+    }
+    
+    code:not(pre code) {
+      font-family: 'JetBrains Mono', monospace;
+      background-color: var(--code-inline-bg);
+      color: var(--accent-primary);
+      padding: 0.2em 0.4em;
+      border-radius: 4px;
+      font-size: 0.9em;
+      border: 1px solid var(--code-inline-border);
+      transition: all 0.2s ease;
+    }
+    
+    code:not(pre code):hover {
+      background-color: rgba(255, 51, 102, 0.25);
+      transform: translateY(-1px);
+    }
+    
+    pre {
+      background-color: var(--code-block-bg);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+      overflow-x: auto;
+      border: 1px solid var(--code-block-border);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      position: relative;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    pre:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+    }
+    
+    pre::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border-radius: 8px;
+      background: radial-gradient(600px circle at var(--x, -100%) var(--y, -100%), 
+                  var(--code-block-glow), transparent 70%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+      z-index: 0;
+    }
+    
+    pre:hover::before {
+      opacity: 1;
+    }
+    
+    pre code {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-primary);
+      background: transparent;
+      padding: 0;
+      border: none;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      display: block;
+      position: relative;
+      z-index: 1;
+    }
+    
+    pre {
+  background-color: rgba(25, 25, 35, 0.7);
+  border-left: 4px solid var(--accent-secondary);
+  padding: 1rem;
+  }
+
+    
+    p + pre code {
+      font-size: 0.9rem;
+    }
+    
+    .keyword { color: #ff7faa; }
+    .string { color: #66ff99; }
+    .number { color: #ffcc66; }
+    .comment { color: #8888aa; font-style: italic; }
+    .function { color: #66ccff; }
+    .operator { color: #ff9966; }
+    
+    img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      margin: 2rem auto;
+      display: block;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--code-block-border);
+    }
+    
+    .disclaimer {
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--code-block-border);
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+    
+
+    @media (max-width: 768px) {
+  .container {
+    max-width: 100%;  
+    padding: 1.5rem 1rem;
+      }
+    }
+    code {
+     word-wrap: break-word;
+     overflow-wrap: break-word;
+     white-space: pre-wrap;
+    }
+
+      
+      h1 {
+        font-size: 2rem;
+      }
+      
+      h2 {
+        font-size: 1.5rem;
+      }
+      
+      pre {
+        padding: 1rem;
+      }
+    
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: var(--bg-secondary);
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: var(--accent-primary);
+      border-radius: 5px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: #ff1a4d;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Understanding Client-Side Path Traversal</h1>
+    
+    <p>Every security researcher should be familiar with path traversal vulnerabilities. These allow an attacker to use payloads like <code>../../../../</code> to access data outside the intended directory. Unlike server-side path traversal, which targets files on the server, client-side path traversal (CSPT) exploits weaknesses in frontend code to make unauthorized requests to unintended API endpoints. While server-side path traversal is well-known and commonly exploited, client-side variants have received far less attention and remain relatively rare in public disclosures.</p>
+
+    <h2>Example</h2>
+    <pre><code>const url = `/app/playbooks/${userInput}`;
+fetch(url);</code></pre>
+
+    <p>If userInput = <code>"../../../../api/v4/users"</code> then:</p>
+    <pre><code>fetch("/app/playbooks/../../../../api/v4/users")</code></pre>
+
+    <p>The browser normalizes this path, so now it resolves to:</p>
+    <pre><code>fetch("api/v4/users")</code></pre>
+
+    <p>Nowadays, it is common to have a web application architecture with a back-end API and a dynamic front end such as React or Angular. If the frontend builds API request paths using unvalidated user input (like route parameters <code>[/users/:id → /users/42]</code> or query strings <code>[/users?id=42]</code>), then an attacker can use relative path traversal <code>(../)</code> to forge requests to sensitive or privileged API endpoints even bypassing client-side authorization logic.</p>
+
+    <h2>Visual Representation</h2>
+    <img src="img/visual1.png" alt="CSPT Attack Flow">
+    <p>In this context, an attacker with control over the <code>{USER_INPUT}</code> value can perform a path traversal in order to route the victim's request to another endpoint.</p>
+
+    <p>An attacker can coerce a victim into executing this unexpected request. This is the starting point of a Client-Side Path Traversal (CSPT). A Client-Side Path Traversal can be split into two parts.</p>
+    <p>The source is the trigger of the CSPT, while the sinks are the exploitable endpoints that can be reached by this CSPT.</p>
+    <img src="img/visual2.png" alt="CSPT Attack Flow">
+    <p>In order to understand how we can use CSPT as an attack vector, both source and sink must be defined.</p>
+
+    <h2>Source</h2>
+    <p>The source is where the attacker puts their input, then that input gets used in JavaScript to build a URL. Once one of these sources flows into JavaScript and gets used to dynamically construct a request path, that's where CSPT can be chained into CSRF, XSS, or other attacks.</p>
+    
+    <p>Sources can come from:</p>
+    <ul>
+      <li><strong>URL components:</strong>
+        <ul>
+          <li>A URL query string: <code>?id=...</code></li>
+          <li>The page URL hash: <code>#id=...</code></li>
+          <li>A path parameter: <code>/MyItems/cheese</code></li>
+        </ul>
+      </li>
+      <li><strong>Web APIs and browser-exposed properties:</strong>
+        <ul>
+          <li><code>window.location</code> (all parts)</li>
+          <li><code>window.name</code></li>
+          <li><code>document.referrer</code></li>
+          <li><code>postMessage</code> parameters</li>
+        </ul>
+      </li>
+      <li><strong>Web Storage:</strong>
+        <ul>
+          <li><code>localStorage</code> / <code>sessionStorage</code></li>
+        </ul>
+      </li>
+      <li><strong>HTML Attributes:</strong>
+        <ul>
+          <li><code>form.action</code> / <code>img.src</code> / <code>iframe.src</code> / <code>script.src</code> (if attacker controls the DOM or markup)</li>
+        </ul>
+      </li>
+    </ul>
+
+    <p>In most cases, the input from the source gets inserted into a JavaScript function like <code>fetch()</code>, which sends an HTTP request. This request is triggered by user interaction (like clicking a button) OR happens automatically when the page loads. Depends on the application.</p>
+
+    <h2>Sink</h2>
+    <p>The sink is the JavaScript code that actually makes the request. For example:</p>
+    <ul>
+      <li><code>fetch()</code></li>
+      <li><code>XMLHttpRequest</code></li>
+      <li><code>$.ajax(...)</code></li>
+      <li><code>axios(...)</code></li>
+    </ul>
+    <p>and even HTML elements that can also send requests such as:</p>
+    <ul>
+      <li><code>Image.src</code></li>
+      <li>HTML form <code>action</code> attribute</li>
+      <li><code>iframe.src</code></li>
+      <li><code>script.src</code></li>
+    </ul>
+    <p>These all can act as sinks if they use untrusted (attacker-controlled) data when constructing the URL or path.</p>
+
+    <p>In CSPT, the attacker can only control the path of this request (e.g. <code>/api/v1/users</code>)</p>
+    <p>But the attacker cannot usually change:</p>
+    <ul>
+      <li>The domain (host)</li>
+      <li>The HTTP method (GET/POST/etc.)</li>
+      <li>The request headers</li>
+      <li>The request body (unless there are other inputs involved)</li>
+    </ul>
+
+    <h2>EXAMPLE 1</h2>
+    <p>Let's say there's a JavaScript function like this:</p>
+    <pre><code>const file = getQueryParam("file");
+fetch(`/files/${file}`);</code></pre>
+    <p>If an attacker sends a victim to:</p>
+    <pre><code>https://example.com/page?file=../../../admin/data</code></pre>
+    <p>Then the browser sends a request to:</p>
+    <pre><code>/admin/data</code></pre>
+    <p>The frontend will send a request to an unintended endpoint!</p>
+
+    <h3>Dealing with Request Bodies</h3>
+    <p>Imagine that the frontend (source) sends this JSON data when making a request:</p>
+    <pre><code>{
+  "user_id": "&lt;VICTIM_USER_ID&gt;",
+  "org_id": "&lt;VICTIM_ORG_ID&gt;",
+  "data": ""
+}</code></pre>
+    <p>In this case, only the endpoints that accept this type of body will be reachable sinks. Meaning the attacker's forged request will only be accepted by endpoints that expect this structure.</p>
+    <p>That limits our reachable sinks. However, it is bypassable with a few tricks:</p>
+    <ol>
+      <li><strong>Loose JSON Schemas:</strong> Some APIs don't strictly validate request bodies. So even if the attacker can't modify required parameters like <code>user_id</code>, they can still send extra parameters. The backend may just ignore them and still process the request.</li>
+      <li><strong>Query Parameter Injection:</strong> Since the attacker controls the path, they can usually add query parameters like: <code>/api/v1/users?role=admin</code></li>
+    </ol>
+    <p>In some cases, query parameters may override values in the body depending on how the backend is coded. This opens additional attack possibilities.</p>
+
+    <h2>EXAMPLE 2</h2>
+    <p>To help explain this vulnerability type, let's walk through an example. Say you have a blog website, and you want to make a page (say <code>https://example.com/viewpost</code>) where users could view posts. One way to implement this would be to include the following JS code in the page:</p>
+    <pre><code>// get the value of the URL parameter "p"
+const post_name = new URLSearchParams(location.search).get("p");
+const blog_post_response = await fetch("/api/posts/get_content/" + post_name);
+const post_content = await blog_post_response.text();
+display_post_html(post_content);</code></pre>
+    <p>When a user navigates to <code>https://example.com/viewpost?p=543</code>, the JS code will get the HTML content of post number 543 by sending a request to <code>https://example.com/api/posts/get_content/543</code>, and will then display this content to the user. Because the <code>p</code> parameter can include attacker-controlled input, and its value is used directly in the path component of the URL which the page requests, this code is vulnerable to CSPT. If an attacker sent a victim a link to <code>https://example.com/viewpost?p=../../../asdf</code>, and the victim clicked on it, then the URL which gets constructed in the page would be <code>https://example.com/api/posts/get_content/../../../asdf</code> and as a result the page would send a request to <code>https://example.com/asdf</code>.</p>
+    <p>The rest of the JS code in the page would run normally, and would use the response to this request as if it was the content of a blog post, because it would be stored in the <code>blog_post_response</code> variable.</p>
+    <p>As you can see, the attacker can make the page send the request to an arbitrary endpoint in <code>https://example.com/</code>. To demonstrate the potential impact of this, let's assume that the application has an open redirect gadget in <code>https://example.com/redirect?u=....</code> In that case, an attacker can chain the CSPT vulnerability with the open redirect gadget by using a payload such as <code>../../../?u=https://attacker.com</code>.</p>
+    <p>When this payload is used, the vulnerable page sends the fetch request to <code>https://example.com/redirect?u=https://attacker.com</code>, and the response to this request would be a redirect to <code>https://attacker.com</code>. Because fetch automatically follows redirects by default, a subsequent request would be sent to <code>https://attacker.com</code>, and the response to that request would be stored in the <code>blog_post_response</code> variable. Because the attacker controls this response, the attacker can control the HTML content of the blog post which would be displayed to the user, most likely leading to XSS.</p>
+    
+    <h3>Recap</h3>
+    <ul>
+      <li>A post-serving page calls the fetch function, sending a request to a URL with attacker-controlled input which is not properly encoded in its path, allowing the attacker to inject <code>../</code> sequences to the path and make the request get sent to an arbitrary endpoint. This behavior is referred to as a CSPT vulnerability</li>
+      <li>The attacker makes the request get sent to an endpoint which contains an open redirect vulnerability.</li>
+      <li>The endpoint responds with a redirect to an attacker-controlled domain.</li>
+      <li>This fetch function automatically follows this redirect, sending a request to the attacker-controlled domain.</li>
+      <li>The attacker-controlled domain responds with some malicious response.</li>
+      <li>The fetch function finishes and returns the malicious response.</li>
+      <li>The page treats that response as if it was the content of a blog post, leading to XSS.</li>
+    </ul>
+
+    <h2>Testing for CSPT</h2>
+    <p>You can test for these issues in two ways:</p>
+    <ol>
+      <li><strong>Manually reviewing JavaScript code:</strong> Use DevTools to find any <code>fetch()</code>/XHR calls via breakpoints to let the browser pause the moment any XHR/fetch is about to fire. At that breakpoint, you can inspect the call stack and see exactly which JS file and line concatenated your "?param=...". 
+      </li>
+      <li><strong>Observing requests in browser:</strong> Watch XHR or fetch requests in the Network tab of DevTools (make sure "All" requests are shown). Check if any request paths are influenced by user-controlled inputs.</li>
+    </ol>
+    
+    <h3>Important Notes</h3>
+    <ul>
+      <li>Requests can be triggered automatically on page load or through user actions</li>
+      <li>Look for places where user-controlled inputs are inserted into paths</li>
+      <li>Network tab only shows obvious parameters - hidden/internal ones require code analysis</li>
+    </ul>
+
+    <h2>Tools & Automation</h2>
+    <ul>
+      <li><a href="https://addons.mozilla.org/en-US/firefox/addon/eval-villain/">Eval Villain</a> for semi-automated testing</li>
+      <li>Research like <a href="https://www.usenix.org/system/files/sec21-khodayari.pdf">JAW: Studying Client-side CSRF</a> for automation approaches</li>
+      <li>Manual analysis remains essential for complex applications</li>
+    </ul>
+
+    <h2>Write-ups & Resources</h2>
+
+    <h3>WRITE-UPS:</h3>
+    <ul>
+      <li><a href="https://matanber.com/blog/cspt-levels">CSPT Levels – Matan Ber</a></li>
+      <li><a href="https://web.archive.org/web/20250531084125/https://mr-medi.github.io/research/2022/11/04/practical-client-side-path-traversal-attacks.html">Practical CSPT Attacks (Mr. Medi)</a></li>
+      <li><a href="https://netragard.com/saving-csrf-client-side-path-traversal-to-the-rescue/#:~:text=CSRF%20is%20typically%20mitigated%20by,web%20applications%20from%20these%20attacks">CSRF Saved by CSPT (Netragard)</a></li>
+      <li><a href="https://blog.doyensec.com/2025/01/09/cspt-file-upload.html">CSPT + File Upload (Doyensec)</a></li>
+      <li><a href="https://medium.com/@renwa/client-side-path-traversal-cspt-bug-bounty-reports-and-techniques-8ee6cd2e7ca1">Bug Bounty Techniques (Renwa)</a></li>
+      <li><a href="https://medium.com/@Nightbloodz/the-power-of-client-side-path-traversal-how-i-found-and-escalated-2-bugs-through-670338afc90f">Escalating CSPT Bugs (Nightbloodz)</a></li>
+      <li><a href="https://blog.xss.am/2023/08/cve-2023-39968-jupyter-token-leak/">Jupyter Token Leak </a></li>
+    </ul>
+
+    <h3>RESOURCES:</h3>
+    <ul>
+      <li><a href="https://blog.doyensec.com/2025/03/27/cspt-resources.htm">CSPT Resources (Doyensec)</a></li>
+      <li><a href="https://blog.doyensec.com/2025/01/09/cspt-file-upload.html">CSPT + File Upload (Again)</a></li>
+      <li><a href="https://blog.doyensec.com/2024/07/02/cspt2csrf.html#:~:text=whitepaper">CSPT2CSRF Whitepaper</a></li>
+      <li><a href="https://drive.google.com/file/d/1l7KzJBMjQ_4RW_o6oVsi04hD_ESrL43i/view?usp=drivesdk">Doyensec CSPT Slide Deck (PDF)</a></li>
+      <li><a href="https://book.hacktricks.wiki/en/pentesting-web/client-side-path-traversal.html">HackTricks CSPT Guide</a></li>
+      <li><a href="https://www.usenix.org/system/files/sec21-khodayari.pdf">Usenix Research Paper</a></li>
+    </ul>
+
+    <h3>PRACTICE:</h3>
+    <ul>
+      <li><a href="https://github.com/doyensec/CSPTPlayground">CSPT Playground (GitHub)</a></li>
+      <li><a href="https://www.root-me.org/en/Challenges/Web-Client/CSPT-The-Ruler">RootMe: CSPT – The Ruler</a></li>
+      <li><a href="https://blog.doyensec.com/2024/12/03/cspt-with-eval-villain.html">Eval Villain CSPT Write-up</a></li>
+      <li><a href="https://addons.mozilla.org/en-US/firefox/addon/eval-villain/">Eval Villain Firefox Add-on</a></li>
+    </ul>
+
+    <p><em>Will be adding more later.</em></p>
+
+
+    <div class="disclaimer" style="margin-top: 3rem;">
+      <h2>Disclaimer</h2>
+      <p>This started as personal notes from my web hacking journey. I cleaned them up in case they help others too.</p>
+      <p>If you're learning too and want to connect:</p>
+      <ul style="list-style: none; padding-left: 0; margin-top: 0.5rem;">
+        <li>🐦 <a href="https://x.com/Symibot" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: underline;">@Symibot on Twitter/X</a></li>
+        <li>💬 Discord: <code>symibot</code></li>
+      </ul>
+    </div>
+
+
+
+  <script>
+  // Enhanced GLOW EFFECT — for all <pre>
+document.querySelectorAll('pre').forEach((block) => {
+  block.addEventListener('mousemove', (e) => {
+    const rect = block.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    block.style.setProperty('--x', `${x}px`);
+    block.style.setProperty('--y', `${y}px`);
+  });
+
+  block.addEventListener('mouseleave', () => {
+    block.style.setProperty('--x', `-100%`);
+    block.style.setProperty('--y', `-100%`);
+  });
+});
+
+  </script>
+
+  
+</body>
+</html>
