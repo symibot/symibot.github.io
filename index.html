@@ -1,0 +1,1070 @@
+  <!-- ============================================================
+       Everything below this comment is a template I designed for the homepage, the HTML/CSS/JS is all by AI.
+       You can use it as needed to add your own content, projects, articles, and writeups.
+       I added comments throughout to guide you on how to edit and customize each section.
+       Have fun :)
+  ============================================================ -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>symibot /> — Security Researcher</title>
+
+  <!-- ============================================================
+       FONTS
+       Using JetBrains Mono for terminal/code text,
+       and Syne for headings (bold, techy, unique)
+  ============================================================ -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ============================================================
+       CSS VARIABLES — Edit these to change the whole site's look
+    ============================================================ */
+    :root {
+      --bg:          #0d0d0d;       /* Main background color */
+      --bg-card:     #141414;       /* Card / panel background */
+      --bg-card2:    #1a1a1a;       /* Slightly lighter card */
+      --border:      #2a2a2a;       /* Subtle borders */
+      --red:         #e8272a;       /* Primary accent color (red) */
+      --red-dim:     rgba(232,39,42,0.12); /* Transparent red for hovers */
+      --text:        #e8e8e8;       /* Main text */
+      --text-muted:  #888;          /* Secondary / muted text */
+      --text-dim:    #555;          /* Very dim text */
+      --font-mono:   'JetBrains Mono', monospace;
+      --font-sans:   'Syne', sans-serif;
+      --radius:      8px;
+      --transition:  0.2s ease;
+    }
+
+    /* ============================================================
+       GLOBAL RESET & BASE STYLES
+    ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 15px;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    ul { list-style: none; }
+
+    img { display: block; max-width: 100%; }
+
+    /* Thin scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ============================================================
+       LAYOUT HELPERS
+    ============================================================ */
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ============================================================
+       ██████████  NAVIGATION BAR  ██████████
+       To change logo text → edit the <a class="logo"> in HTML
+       To add nav links → add <a href="#"> inside <nav>
+    ============================================================ */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13,13,13,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+    }
+
+    /* Logo — change text in HTML */
+    .logo {
+      font-family: var(--font-mono);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+    .logo span { color: var(--red); }
+
+    /* Nav links */
+    nav {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+
+    nav a {
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      transition: color var(--transition);
+      position: relative;
+    }
+    nav a:hover,
+    nav a.active { color: var(--text); }
+
+    /* Active underline */
+    nav a.active::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0; right: 0;
+      height: 2px;
+      background: var(--red);
+    }
+
+    /* Nav icon buttons (GitHub, Email) */
+    .nav-icons { display: flex; gap: 16px; align-items: center; }
+    .nav-icons a {
+      color: var(--text-muted);
+      transition: color var(--transition);
+    }
+    .nav-icons a:hover { color: var(--red); }
+    .nav-icons svg { width: 20px; height: 20px; fill: currentColor; }
+
+    /* Hamburger (mobile) */
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      cursor: pointer;
+      padding: 4px;
+    }
+    .hamburger span {
+      display: block;
+      width: 22px;
+      height: 2px;
+      background: var(--text);
+      transition: var(--transition);
+    }
+
+
+    /* ============================================================
+       ██████████  HERO SECTION  ██████████
+       Left side: headline + buttons + stats
+       Right side: terminal animation
+    ============================================================ */
+    #hero {
+      padding: 80px 0 60px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Faint grid background behind hero */
+    #hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 40px 40px;
+      opacity: 0.25;
+      pointer-events: none;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+      position: relative;
+    }
+
+    /* ---- Hero left: text ---- */
+    .hero-text h1 {
+      font-size: clamp(2.2rem, 5vw, 3.5rem);
+      font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: 20px;
+    }
+    /* The colored word — change in HTML */
+    .hero-text h1 .highlight { color: var(--red); }
+
+    .hero-text p {
+      color: var(--text-muted);
+      font-size: 1rem;
+      margin-bottom: 32px;
+      max-width: 380px;
+    }
+
+    /* Hero CTA buttons */
+    .hero-buttons { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 52px; }
+
+    .btn-primary {
+      background: var(--red);
+      color: #fff;
+      padding: 10px 22px;
+      border-radius: var(--radius);
+      font-weight: 700;
+      font-size: 0.9rem;
+      letter-spacing: 0.03em;
+      transition: opacity var(--transition), transform var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
+
+    .btn-outline {
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 22px;
+      border-radius: var(--radius);
+      font-weight: 700;
+      font-size: 0.9rem;
+      letter-spacing: 0.03em;
+      transition: border-color var(--transition), background var(--transition);
+    }
+    .btn-outline:hover { border-color: var(--text-muted); background: var(--bg-card); }
+
+    /* Hero stats row */
+    .hero-stats {
+      display: flex;
+      gap: 36px;
+      flex-wrap: wrap;
+    }
+    .stat {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .stat-label {
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-family: var(--font-mono);
+    }
+    .stat-value {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--text);
+    }
+    .stat-icon {
+      font-size: 1rem;
+      color: var(--red);
+      margin-bottom: 4px;
+    }
+
+    /* ---- Hero right: terminal ---- */
+    .terminal-window {
+      background: #111;
+      border: 1px solid #222;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+
+    /* Terminal title bar (traffic lights) */
+    .terminal-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 14px;
+      background: #1a1a1a;
+      border-bottom: 1px solid #222;
+    }
+    .dot { width: 12px; height: 12px; border-radius: 50%; }
+    .dot-red    { background: #ff5f57; }
+    .dot-yellow { background: #febc2e; }
+    .dot-green  { background: #28c840; }
+
+    /* Terminal body — content typed here */
+    .terminal-body {
+      padding: 20px 24px;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      line-height: 2;
+      min-height: 200px;
+    }
+    .t-prompt { color: #e8272a; }
+    .t-cmd    { color: #e8e8e8; }
+    .t-key    { color: var(--text-muted); min-width: 72px; display: inline-block; }
+    .t-val    { color: #e8e8e8; }
+    .t-cursor {
+      display: inline-block;
+      width: 9px; height: 14px;
+      background: var(--red);
+      vertical-align: middle;
+      animation: blink 1s steps(1) infinite;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+
+
+    /* ============================================================
+       ██████████  SECTION SHARED STYLES  ██████████
+       All content sections (articles, tools, writeups) share this
+    ============================================================ */
+    .section {
+      padding: 64px 0;
+      border-top: 1px solid var(--border);
+    }
+
+    /* Section header row: title left, arrows right */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 32px;
+    }
+
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    /* Red dot before title */
+    .section-title::before {
+      content: '';
+      display: inline-block;
+      width: 8px; height: 8px;
+      background: var(--red);
+      border-radius: 50%;
+    }
+
+    /* Arrow navigation buttons beside section title */
+    .arrows { display: flex; gap: 8px; }
+
+    .arrow-btn {
+      width: 32px; height: 32px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color var(--transition), color var(--transition);
+      font-size: 1rem;
+    }
+    .arrow-btn:hover { border-color: var(--text-muted); color: var(--text); }
+
+
+    /* ============================================================
+       ██████████  ARTICLE CARDS  ██████████
+       Cards used in "Web Security Articles" and "Malware Articles"
+    ============================================================ */
+
+    /* Horizontal scrollable row */
+    .cards-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      overflow-x: auto;
+      scrollbar-width: none;      /* Hide scroll bar */
+      padding-bottom: 4px;
+      padding-top: 8px;      
+      margin-top: -8px;      
+    }
+    .cards-row::-webkit-scrollbar { display: none; }
+
+    /* Individual article card */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: border-color var(--transition), transform var(--transition);
+      cursor: pointer;
+      min-width: 0; /* prevents overflow */
+    }
+    .card:hover {
+      border-color: #444;
+      transform: translateY(-3px);
+    }
+
+    /* Card visual area (top image / illustration zone) */
+    .card-visual {
+      height: 120px;
+      background: var(--bg-card2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--red);
+      font-size: 2rem;
+      border-bottom: 1px solid var(--border);
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Code-snippet style illustration inside card visual */
+    .card-code {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      line-height: 1.6;
+      color: #666;
+      padding: 12px;
+      width: 100%;
+      white-space: pre;
+    }
+    .card-code .red { color: var(--red); }
+    .card-code .grn { color: #5a9e6f; }
+    .card-code .yel { color: #c9a227; }
+
+    /* Card body (text content) */
+    .card-body { padding: 16px; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+
+    .card-title {
+      font-size: 0.92rem;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    .card-desc {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      flex: 1;
+    }
+
+    /* Card footer: date + read time */
+    .card-meta {
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .card-meta .dot-sep {
+      width: 3px; height: 3px;
+      background: var(--text-dim);
+      border-radius: 50%;
+    }
+
+
+    /* ============================================================
+       ██████████  TOOLS SECTION  ██████████
+       Smaller cards, displayed in a 5-column row
+    ============================================================ */
+    .tools-row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+    }
+
+    .tool-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: border-color var(--transition), transform var(--transition);
+    }
+    .tool-card:hover {
+      border-color: #444;
+      transform: translateY(-2px);
+    }
+
+    .tool-icon {
+      width: 32px; height: 32px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--red);
+      background: var(--bg-card2);
+    }
+
+    .tool-name {
+      font-size: 0.88rem;
+      font-weight: 700;
+    }
+
+    .tool-desc {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      flex: 1;
+    }
+
+    .tool-link {
+      font-size: 0.72rem;
+      color: var(--red);
+      font-family: var(--font-mono);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 4px;
+      transition: opacity var(--transition);
+    }
+    .tool-link:hover { opacity: 0.7; }
+
+
+    /* ============================================================
+       ██████████  WRITEUPS SECTION  ██████████
+       Simple list-style rows with icon, title, desc, source
+    ============================================================ */
+    .writeups-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .writeup-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: border-color var(--transition), transform var(--transition);
+      cursor: pointer;
+    }
+    .writeup-card:hover {
+      border-color: #444;
+      transform: translateY(-2px);
+    }
+
+    .writeup-icon {
+      width: 36px; height: 36px;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      background: var(--bg-card2);
+    }
+
+    .writeup-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      line-height: 1.4;
+    }
+
+    .writeup-desc {
+      font-size: 0.77rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      flex: 1;
+    }
+
+    .writeup-meta {
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .writeup-source {
+      color: var(--red);
+      font-size: 0.7rem;
+    }
+
+
+    /* ============================================================
+       ██████████  FOOTER  ██████████
+    ============================================================ */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 40px 0;
+      text-align: center;
+    }
+
+    .footer-heading {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      margin-bottom: 24px;
+    }
+
+    .footer-links {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 36px;
+      flex-wrap: wrap;
+    }
+
+    .footer-link {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      transition: color var(--transition);
+    }
+    .footer-link.twitter { color: #e8272a; }
+    .footer-link.email   { color: var(--text-muted); }
+    .footer-link:hover   { opacity: 0.75; }
+
+
+    /* ============================================================
+       RESPONSIVE — Mobile adjustments
+    ============================================================ */
+    @media (max-width: 768px) {
+      nav { display: none; }
+      nav.open { display: flex; flex-direction: column; position: fixed; inset: 60px 0 0 0; background: var(--bg); padding: 24px; gap: 20px; z-index: 99; }
+      .hamburger { display: flex; }
+
+      .hero-grid { grid-template-columns: 1fr; gap: 40px; }
+      .hero-text h1 { font-size: 2rem; }
+      .terminal-window { font-size: 0.72rem; }
+
+      .cards-row  { grid-template-columns: repeat(2, 1fr); }
+      .tools-row  { grid-template-columns: repeat(2, 1fr); }
+      .writeups-row { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 480px) {
+      .cards-row  { grid-template-columns: 1fr; }
+      .tools-row  { grid-template-columns: 1fr; }
+      .writeups-row { grid-template-columns: 1fr; }
+      .hero-stats { gap: 20px; }
+    }
+
+  </style>
+</head>
+
+<body>
+
+  <!-- ============================================================
+       ██████████  NAVIGATION  ██████████
+       - Change logo text here
+       - Add/remove nav links here
+       - Change social links (GitHub, email) here
+  ============================================================ -->
+  <header>
+    <div class="container nav-inner">
+
+      <!-- LOGO — change "symibot" to your name/handle -->
+      <a href="#" class="logo">symibot <span>/&gt;</span></a>
+
+      <!-- NAVIGATION LINKS — add/remove as needed -->
+      <nav id="main-nav">
+        <a href="#hero"     class="active">Home</a>
+        <a href="#articles">Articles</a>
+        <a href="#tools">Tools</a>
+        <a href="#writeups">Writeups</a>
+        <a href="#about">About</a>
+      </nav>
+
+      <!-- SOCIAL ICONS — change hrefs to your profiles -->
+      <div class="nav-icons">
+        <a href="https://github.com/symibot" target="_blank" aria-label="GitHub">
+          <!-- GitHub icon -->
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 .5C5.37.5 0 5.87 0 12.5c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12.5C24 5.87 18.63.5 12 .5Z"/>
+          </svg>
+        </a>
+        <a href="https://x.com/symibot" target="_blank" aria-label="X (Twitter)">
+          <!-- X icon -->
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+          </svg>
+        </a>
+        <a href="mailto:symibot@example.com" aria-label="Email">
+          <!-- Email icon -->
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 4H4C2.9 4 2 4.9 2 6v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/>
+          </svg>
+        </a>
+        <!-- Mobile hamburger -->
+        <div class="hamburger" id="hamburger" aria-label="Menu" role="button" tabindex="0">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+
+  <!-- ============================================================
+       ██████████  HERO SECTION  ██████████
+       - Change headline (h1) text
+       - Change the subheadline paragraph
+       - Change the CTA button labels/links
+       - Change the 4 stats (Articles, Tools, Writeups, Years)
+       - Change the terminal details block on the right
+  ============================================================ -->
+  <section id="hero">
+    <div class="container hero-grid">
+
+      <!-- LEFT: headline + buttons + stats -->
+      <div class="hero-text">
+
+        <!-- MAIN HEADLINE — edit this -->
+        <h1>Security research<br>is my <span class="highlight">craft.</span></h1>
+
+        <!-- SUBHEADLINE — edit this -->
+        <p>I poke things with a stick, try to understand them,<br>and write about everything I learn.</p>
+
+        <!-- CTA BUTTONS — change hrefs -->
+        <div class="hero-buttons">
+          <a href="#articles" class="btn-primary">Browse Sections ↓</a>
+          <a href="#about"    class="btn-outline">About Me</a>
+        </div>
+
+        <!-- STATS — change numbers and labels -->
+        <div class="hero-stats">
+          <div class="stat">
+            <span class="stat-label">Articles</span>
+            <span class="stat-value">4</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Projects</span>
+            <span class="stat-value">1</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Writeups</span>
+            <span class="stat-value">1</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Years Learning</span>
+            <span class="stat-value">1.6</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT: terminal window -->
+      <div class="terminal-window">
+        <div class="terminal-bar">
+          <div class="dot dot-red"></div>
+          <div class="dot dot-yellow"></div>
+          <div class="dot dot-green"></div>
+        </div>
+        <div class="terminal-body">
+          <!-- TERMINAL CONTENT — edit your info here -->
+          <div><span class="t-prompt">symibot@noob</span><span style="color:#555">:~$</span> <span class="t-cmd">whoami</span></div>
+          <div style="margin-top:8px">
+            <span class="t-key">name:</span>     <span class="t-val">symibot</span>
+          </div>
+          <div>
+            <span class="t-key">role:</span>     <span class="t-val">security researcher</span>
+          </div>
+          <div>
+            <span class="t-key">focus:</span>    <span class="t-val">web exploitation, browser security,</span>
+          </div>
+          <div>
+            <span class="t-key"></span>           <span class="t-val">malware analysis, Rust.</span>
+          </div>
+          <div>
+            <span class="t-key">mission:</span>  <span class="t-val">sleep.</span>
+          </div>
+          <div style="margin-top:12px">
+            <span class="t-prompt">symibot@noob</span><span style="color:#555">:~$</span> <span class="t-cursor"></span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ============================================================
+       ██████████  WEB SECURITY ARTICLES  ██████████
+       To add a card: copy one <div class="card">…</div> block
+       and change: card-code content, card-title, card-desc, card-meta
+       Link the card by wrapping it in <a href="your-article-url">
+  ============================================================ -->
+  <section id="articles" class="section">
+    <div class="container">
+
+      <div class="section-header">
+        <h2 class="section-title">Web Security Articles</h2>
+        <div class="arrows">
+          <button class="arrow-btn" aria-label="Previous">&#8592;</button>
+          <button class="arrow-btn" aria-label="Next">&#8594;</button>
+        </div>
+      </div>
+
+      <div class="cards-row" id="web-cards">
+
+        <!-- CARD 1 — Client-Side Path Traversal -->
+        <div class="card">
+          <div class="card-visual" style="padding:0;">
+           <img src="img/thumbnail1.png" alt="Article 1 thumbnail" style="width:100%; height:100%; object-fit:cover;">
+        </div>
+          <div class="card-body">
+            <div class="card-title">Client-Side Path Traversal (CSPT): Deep Dive</div>
+            <div class="card-desc">I’ve put together everything I’ve come across: explanations, examples, writeups, and labs.
+          </div>
+            <div class="card-meta">
+              <span>May 18, 2025</span>
+              <span class="dot-sep"></span>
+              <span>12 min read</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- CARD 2 — postMessage -->
+        <div class="card">
+          <div class="card-visual">
+          <img src="img/thumbnail2.png" alt="Article 2 thumbnail" style="width:100%; height:100%; object-fit:cover;">
+          </div>
+          <div class="card-body">
+            <div class="card-title">postMessage Vulnerabilities</div>
+            <div class="card-desc">postMessage vulnerabilities are often overlooked, which makes them a great topic to learn.</div>
+            
+            <div class="card-meta">
+              <span>Apr 18, 2025</span>
+              <span class="dot-sep"></span>
+              <span>9 min read</span>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- end .cards-row -->
+    </div>
+  </section>
+
+
+  <!-- ============================================================
+       ██████████  MALWARE ARTICLES  ██████████
+       Same structure as Web Security above.
+       Add more cards the same way.
+  ============================================================ -->
+  <section class="section">
+    <div class="container">
+
+      <div class="section-header">
+        <h2 class="section-title">Malware Articles</h2>
+        <div class="arrows">
+          <button class="arrow-btn" aria-label="Previous">&#8592;</button>
+          <button class="arrow-btn" aria-label="Next">&#8594;</button>
+        </div>
+      </div>
+
+      <div class="cards-row" id="malware-cards">
+
+        <!-- CARD 1 — Evasion -->
+        <div class="card">
+          <div class="card-visual" style="font-size:2.2rem;">&#9763;</div>
+          <div class="card-body">
+            <div class="card-title">How malware avoids detection</div>
+            <div class="card-desc"> COMING SOON</div>
+            <div class="card-meta">
+              <span>Apr 25, 2025</span>
+              <span class="dot-sep"></span>
+              <span>14 min read</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- CARD 2 — DLL basic injection  -->
+        <div class="card">
+          <div class="card-visual" style="font-size:2.2rem;">&#9763;</div>
+          <div class="card-body">
+            <div class="card-title">Basic DLL injection</div>
+            <div class="card-desc"> COMING SOON</div>
+            <div class="card-meta">
+              <span>Apr 25, 2025</span>
+              <span class="dot-sep"></span>
+              <span>14 min read</span>
+            </div>
+          </div>
+        </div>
+
+        
+
+      </div><!-- end .cards-row -->
+    </div>
+  </section>
+
+
+  <!-- ============================================================
+       ██████████  PROJECTS  ██████████
+       To add a project: copy one <div class="tool-card"> block
+       Change: tool-icon text, tool-name, tool-desc, and the href
+  ============================================================ -->
+  <section id="Projects" class="section">
+    <div class="container">
+
+      <div class="section-header">
+        <h2 class="section-title">Projects</h2>
+        <div class="arrows">
+          <button class="arrow-btn" aria-label="Previous">&#8592;</button>
+          <button class="arrow-btn" aria-label="Next">&#8594;</button>
+        </div>
+      </div>
+
+      <div class="tools-row">
+
+      <!-- PROJECT 1 -->
+      <div class="tool-card">
+        <div class="tool-icon">&gt;_</div>
+        <div class="tool-name">DLL Injector in Rust PoC</div>
+        <div class="tool-desc">A very basic DLL injector implemented in Rust.</div>
+        <a href="https://github.com/symibot/test-DLL-injector-Rust" target="_blank" class="tool-link">View on GitHub ↗</a>
+      </div>
+
+</div>
+    </div>
+  </section>
+
+
+  <!-- ============================================================
+       ██████████  WRITEUPS  ██████████
+       To add a writeup: copy one <div class="writeup-card"> block
+       Change: icon emoji, title, desc, date, and source label
+  ============================================================ -->
+  <section id="writeups" class="section">
+    <div class="container">
+
+      <div class="section-header">
+        <h2 class="section-title">Writeups</h2>
+        <div class="arrows">
+          <button class="arrow-btn" aria-label="Previous">&#8592;</button>
+          <button class="arrow-btn" aria-label="Next">&#8594;</button>
+        </div>
+      </div>
+
+      <div class="writeups-row">
+
+        <!-- WRITEUP 1 -->
+        <div class="writeup-card">
+          <div class="writeup-icon">&#128100;</div>
+          <div class="writeup-title">IDOR dupe</div>
+          <div class="writeup-desc">Finding &amp; exploiting IDOR in real-world apps.</div>
+          <div class="writeup-meta">
+            <span>Apr 15, 2025</span>
+            <span class="writeup-source">· Medium</span>
+          </div>
+        </div>
+
+       
+
+      </div><!-- end .writeups-row -->
+    </div>
+  </section>
+
+
+  <!-- ============================================================
+       ██████████  ABOUT SECTION  ██████████
+       A minimal "about" landing spot (link target from nav)
+  ============================================================ -->
+  <section id="about" class="section">
+    <div class="container" style="max-width:640px">
+      <div class="section-header">
+        <h2 class="section-title">About</h2>
+      </div>
+      <!-- EDIT your about text here -->
+      <p style="color:var(--text-muted); line-height:1.8; margin-bottom:16px;">
+        I'm a self-taught security researcher focused on web exploitation, malware analysis,
+        and programming in Rust. I document everything I learn through articles, writeups, and
+        open-source tools.
+      </p>
+      <p style="color:var(--text-muted); line-height:1.8;">
+        This site is my public notebook, feel free to read, learn, and reach out if you
+        want to collaborate or just talk security.
+      </p>
+    </div>
+  </section>
+
+
+  <!-- ============================================================
+       ██████████  FOOTER  ██████████
+       Change social links and handle text here
+  ============================================================ -->
+  <footer>
+    <div class="container">
+      <p class="footer-heading">Let's connect</p>
+      <div class="footer-links">
+
+        <!-- Twitter/X link — change handle -->
+        <a href="https://x.com/symibot" target="_blank" class="footer-link twitter">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+          </svg>
+          @symibot_
+        </a>
+
+        <!-- Email link — change email -->
+        <a href="mailto:symibot@gmail.com" class="footer-link email">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M20 4H4C2.9 4 2 4.9 2 6v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/>
+          </svg>
+          symibot@gmail.com
+        </a>
+
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- ============================================================
+       JAVASCRIPT — Navigation toggling (mobile hamburger)
+       You shouldn't need to change this unless adding new features
+  ============================================================ -->
+  <script>
+    // Mobile hamburger menu toggle
+    const hamburger = document.getElementById('hamburger');
+    const nav       = document.getElementById('main-nav');
+
+    hamburger.addEventListener('click', () => {
+      nav.classList.toggle('open');
+    });
+
+    // Close menu when a nav link is clicked
+    nav.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => nav.classList.remove('open'));
+    });
+
+    // Highlight active nav link based on scroll position
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks  = document.querySelectorAll('nav a[href^="#"]');
+
+    function updateActiveLink() {
+      let current = '';
+      sections.forEach(sec => {
+        if (window.scrollY >= sec.offsetTop - 80) {
+          current = '#' + sec.id;
+        }
+      });
+      navLinks.forEach(a => {
+        a.classList.toggle('active', a.getAttribute('href') === current);
+      });
+    }
+
+    window.addEventListener('scroll', updateActiveLink, { passive: true });
+    updateActiveLink();
+  </script>
+
+</body>
+</html>
+
+
+
